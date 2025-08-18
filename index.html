@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Amharic → Latin Transliteration</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <h1>Amharic → Latin Transliteration</h1>
+
+    <textarea id="amharicInput" placeholder="Type or paste Amharic text here..."></textarea>
+    <br>
+    <button id="transliterateBtn">Transliterate</button>
+    <button id="alternateTransliterateBtn">Alternate-Transliterate</button>
+    <br><br>
+    <textarea id="latinOutput" placeholder="Your transliterated text will appear here..." readonly></textarea>
+
+    <br>
+    <button id="downloadPDFBtn">Download PDF</button>
+    <button id="downloadPPTBtn">Download PPT</button>
+    <br><br>
+
+    <script src="script.js"></script>
+    
+</body>
+</html>
