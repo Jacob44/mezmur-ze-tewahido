@@ -410,6 +410,10 @@ function alternateTransliterateForPDF() {
 // <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 
 // Creative PPT generation function
+// Enhanced PPT generation with 6-8 lines per slide and pair integrity
+// Main PPT function (no changes to grouping logic, just updated slide creation)
+// Updated PPT function with corrected syntax
+// Updated main PPT function with better slide capacity
 function downloadPPT() {
     const output = document.getElementById('latinOutput').value;
    
@@ -418,49 +422,19 @@ function downloadPPT() {
         return;
     }
    
-    // Create new presentation
-    const pres = new PptxGenJS();
+    // Create new presentation with correct initialization
+    let pres = new PptxGenJS();
    
-    // Set presentation properties
+    // Set presentation properties (simplified)
     pres.author = 'Amharic Transliterator';
-    pres.company = 'Language Tools';
-    pres.subject = 'Amharic Script Transliteration';
-    pres.title = 'Amharic to Latin Script';
-   
-    // Define creative themes and layouts
-    const themes = [
-        {
-            name: 'Blue Gradient',
-            background: { fill: 'F1F8FF' },
-            amharicColor: '1E3A8A', // Deep blue
-            englishColor: 'DC2626', // Red
-            accentColor: '3B82F6'   // Light blue
-        },
-        {
-            name: 'Green Nature',
-            background: { fill: 'F0FDF4' },
-            amharicColor: '166534', // Dark green
-            englishColor: 'B91C1C', // Dark red
-            accentColor: '22C55E'   // Green
-        },
-        {
-            name: 'Purple Professional',
-            background: { fill: 'FAF5FF' },
-            amharicColor: '6B21A8', // Purple
-            englishColor: 'DC2626', // Red
-            accentColor: '8B5CF6'   // Light purple
-        }
-    ];
-   
-    // Randomly select a theme for variety
-    const selectedTheme = themes[Math.floor(Math.random() * themes.length)];
+    pres.title = 'Orthodox Mezmur - Amharic to Latin Script';
    
     // Create title slide
-    createTitleSlide(pres, selectedTheme);
+    createTitleSlideFixed(pres);
    
-    // Process content into pairs
-    const lines = output.split('\n').filter(line => line.trim());
-    const pairs = [];
+    // Process content (same logic as before)
+    const lines = output.split('\n');
+    const contentPairs = [];
    
     for (let i = 0; i < lines.length; i++) {
         const currentLine = lines[i].trim();
@@ -471,66 +445,210 @@ function downloadPPT() {
         const isEnglishPair = isAmharicLine && nextLine && !/[\u1200-\u137F]/.test(nextLine);
        
         if (isEnglishPair) {
-            pairs.push({
+            contentPairs.push({
+                type: 'pair',
                 amharic: currentLine,
-                english: nextLine
+                english: nextLine,
+                linesCount: 2
             });
-            i++; // Skip next line
+            i++;
         } else {
-            // Handle standalone lines
-            if (isAmharicLine) {
-                pairs.push({
-                    amharic: currentLine,
-                    english: ''
-                });
-            } else {
-                pairs.push({
-                    amharic: '',
-                    english: currentLine
-                });
-            }
+            contentPairs.push({
+                type: 'single',
+                text: currentLine,
+                isAmharic: isAmharicLine,
+                linesCount: 1
+            });
         }
     }
    
-    // Create content slides with creative layouts
-    let pairIndex = 0;
-    while (pairIndex < pairs.length) {
-        const layout = getRandomLayout();
+    // Group into slides with better capacity due to tighter spacing
+    const slides = [];
+    let currentSlideContent = [];
+    let currentSlideLines = 0;
+    const maxLinesPerSlide = 10; // Increased from 8 due to tighter spacing
+   
+    for (let i = 0; i < contentPairs.length; i++) {
+        const item = contentPairs[i];
+        const itemLines = item.linesCount;
        
-        if (layout === 'single') {
-            createSinglePairSlide(pres, pairs[pairIndex], selectedTheme, pairIndex + 1);
-            pairIndex++;
-        } else if (layout === 'double' && pairIndex + 1 < pairs.length) {
-            createDoublePairSlide(pres, [pairs[pairIndex], pairs[pairIndex + 1]], selectedTheme, pairIndex + 1);
-            pairIndex += 2;
-        } else {
-            createSinglePairSlide(pres, pairs[pairIndex], selectedTheme, pairIndex + 1);
-            pairIndex++;
+        if (currentSlideLines + itemLines > maxLinesPerSlide && currentSlideContent.length > 0) {
+            slides.push([...currentSlideContent]);
+            currentSlideContent = [];
+            currentSlideLines = 0;
         }
+       
+        currentSlideContent.push(item);
+        currentSlideLines += itemLines;
     }
    
-    // Create summary slide
-    createSummarySlide(pres, pairs.length, selectedTheme);
+    if (currentSlideContent.length > 0) {
+        slides.push(currentSlideContent);
+    }
    
-    // Generate filename and save
-    const timestamp = new Date().toISOString().slice(0, 10);
-    const filename = `Amharic-Transliteration-${timestamp}.pptx`;
+    // Create content slides
+    slides.forEach((slideContent, index) => {
+        createContentSlideFixed(pres, slideContent, index + 1);
+    });
    
-    pres.writeFile({ fileName: filename });
+    // Save with error handling
+    try {
+        const timestamp = new Date().toISOString().slice(0, 10);
+        const filename = `Orthodox-Mezmur-${timestamp}.pptx`;
+        pres.writeFile({ fileName: filename });
+    } catch (error) {
+        console.error('Error creating PowerPoint:', error);
+        alert('Error creating PowerPoint file. Please try again.');
+    }
 }
 
-// Create creative title slide
-function createTitleSlide(pres, theme) {
-    const slide = pres.addSlide({ masterName: 'TITLE_SLIDE' });
+function createTitleSlideFixed(pres) {
+    let slide = pres.addSlide();
    
-    // Background
+    // Set background
+    slide.background = { fill: "FDF8E1" };
+   
+    // Image placeholder (simplified)
+    slide.addShape(pres.ShapeType.rect, {
+        x: 1.5,
+        y: 0.8,
+        w: 7,
+        h: 2.5,
+        fill: { color: "FFFFFF" },
+        line: { color: "D4AF37", width: 2 }
+    });
+   
+    slide.addText("Insert Orthodox Icon or Image Here", {
+        x: 1.5,
+        y: 1.8,
+        w: 7,
+        h: 0.8,
+        fontSize: 18,
+        color: "8B7355",
+        align: "center",
+        fontFace: "Calibri"
+    });
+   
+    // Ethiopian Orthodox cross (✠ with three horizontal bars)
+    slide.addText("☩", {
+        x: 4.2,
+        y: 0.3,
+        w: 1.6,
+        h: 0.5,
+        fontSize: 40,
+        color: "D4AF37",
+        align: "center"
+    });
+   
+    // Title placeholder
+    slide.addShape(pres.ShapeType.rect, {
+        x: 1,
+        y: 3.8,
+        w: 8,
+        h: 1.2,
+        fill: { color: "F5F5DC" },
+        line: { color: "D4AF37", width: 2 }
+    });
+   
+    slide.addText("Enter your Mezmur title here", {
+        x: 1,
+        y: 4.1,
+        w: 8,
+        h: 0.6,
+        fontSize: 28,
+        bold: true,
+        color: "8B0000",
+        align: "center",
+        fontFace: "Times New Roman"
+    });
+   
+    // Removed subtitle and date as requested
+}
+
+// Simplified content slide creation
+// Updated content slide with minimal uniform spacing and better contrast colors
+function createContentSlideFixed(pres, slideContent, slideNumber) {
+    let slide = pres.addSlide();
+   
+    // Set background
+    slide.background = { fill: "FDF8E1" };
+   
+    // Add slide number
+    slide.addText(slideNumber.toString(), {
+        x: 9.2,
+        y: 6.8,
+        w: 0.5,
+        h: 0.3,
+        fontSize: 12,
+        color: "666666",
+        align: "center"
+    });
+   
+    let yPosition = 0.5; // Start higher on the slide
+    const lineSpacing = 0.6; // Reduced from 0.8 to 0.6 for minimal spacing
+    const pairSpacing = 0.1; // Reduced from 0.2 to 0.1 for minimal spacing between pairs
+   
+    slideContent.forEach((item) => {
+        if (item.type === 'pair') {
+            // Amharic text - better contrast with dark blue
+            slide.addText(item.amharic, {
+                x: 0.8,
+                y: yPosition,
+                w: 8.4,
+                h: 0.5, // Reduced height for tighter spacing
+                fontSize: 26, // Slightly reduced from 28
+                bold: true,
+                color: "1B365D", // Darker blue for better contrast
+                align: "left"
+            });
+           
+            yPosition += lineSpacing;
+           
+            // English text - better contrast with dark red
+            slide.addText(item.english, {
+                x: 0.8,
+                y: yPosition,
+                w: 8.4,
+                h: 0.4, // Reduced height for tighter spacing
+                fontSize: 20, // Slightly reduced from 22
+                bold: true,
+                color: "8B0000", // Darker red for better contrast
+                align: "left"
+            });
+           
+            yPosition += lineSpacing + pairSpacing;
+           
+        } else if (item.type === 'single') {
+            const fontSize = item.isAmharic ? 26 : 20; // Slightly reduced sizes
+            const color = item.isAmharic ? "1B365D" : "8B0000"; // Better contrast colors
+           
+            slide.addText(item.text, {
+                x: 0.8,
+                y: yPosition,
+                w: 8.4,
+                h: 0.5, // Reduced height for tighter spacing
+                fontSize: fontSize,
+                bold: true,
+                color: color,
+                align: "left"
+            });
+           
+            yPosition += lineSpacing;
+        }
+    });
+}
+
+
+// Create professional title slide
+function createTitleSlide(pres, theme) {
+    const slide = pres.addSlide();
     slide.background = theme.background;
    
-    // Main title with creative positioning
+    // Main title
     slide.addText('Amharic Script Transliteration', {
-        x: 1,
-        y: 1.5,
-        w: 8,
+        x: 0.5,
+        y: 2,
+        w: 9,
         h: 1.5,
         fontSize: 44,
         bold: true,
@@ -541,9 +659,9 @@ function createTitleSlide(pres, theme) {
    
     // Subtitle
     slide.addText('From Ethiopian Script to Latin Characters', {
-        x: 1,
-        y: 3,
-        w: 8,
+        x: 0.5,
+        y: 3.8,
+        w: 9,
         h: 0.8,
         fontSize: 24,
         color: theme.englishColor,
@@ -551,32 +669,213 @@ function createTitleSlide(pres, theme) {
         fontFace: 'Calibri'
     });
    
-    // Decorative elements
+    // Decorative line
     slide.addShape('rect', {
         x: 2,
-        y: 4.2,
+        y: 4.8,
         w: 6,
         h: 0.1,
         fill: theme.accentColor
     });
    
-    // Add date
+    // Date and info
+    const currentDate = new Date().toLocaleDateString('en-US', {
+        year: 'numeric', month: 'long', day: 'numeric'
+    });
+   
+    slide.addText(currentDate, {
+        x: 0.5,
+        y: 5.5,
+        w: 9,
+        h: 0.4,
+        fontSize: 16,
+        color: theme.textColor,
+        align: 'center',
+        fontFace: 'Calibri'
+    });
+}
+
+// Create clean content slide without lines and equal indentation
+function createContentSlide(pres, slideContent, theme, slideNumber) {
+    const slide = pres.addSlide();
+    slide.background = { fill: 'FDF8E1' }; // Same warm cream as title
+   
+    // Add slide number
+    slide.addText(`${slideNumber}`, {
+        x: 9.2,
+        y: 6.8,
+        w: 0.5,
+        h: 0.3,
+        fontSize: 14,
+        color: '666666',
+        align: 'center',
+        fontFace: 'Calibri'
+    });
+   
+    let yPosition = 0.8;
+    const lineSpacing = 0.8; // Consistent spacing
+    const pairSpacing = 0.2; // Minimal spacing between pairs
+   
+    slideContent.forEach((item) => {
+        if (item.type === 'pair') {
+            // Amharic text - same indentation as English
+            slide.addText(item.amharic, {
+                x: 0.8, // Same x position as English
+                y: yPosition,
+                w: 8.4,
+                h: 0.7,
+                fontSize: 28,
+                bold: true,
+                color: '1E3A8A', // Deep blue
+                align: 'left',
+                fontFace: 'Calibri'
+            });
+           
+            yPosition += lineSpacing;
+           
+            // English text - same indentation as Amharic
+            slide.addText(item.english, {
+                x: 0.8, // Same x position as Amharic
+                y: yPosition,
+                w: 8.4,
+                h: 0.6,
+                fontSize: 22,
+                bold: true,
+                color: 'DC2626', // Red
+                align: 'left',
+                fontFace: 'Calibri'
+            });
+           
+            yPosition += lineSpacing + pairSpacing;
+           
+        } else if (item.type === 'single') {
+            // Single line - same indentation
+            const fontSize = item.isAmharic ? 28 : 22;
+            const color = item.isAmharic ? '1E3A8A' : 'DC2626';
+           
+            slide.addText(item.text, {
+                x: 0.8, // Same x position for all text
+                y: yPosition,
+                w: 8.4,
+                h: 0.7,
+                fontSize: fontSize,
+                bold: true,
+                color: color,
+                align: 'left',
+                fontFace: 'Calibri'
+            });
+           
+            yPosition += lineSpacing;
+        }
+    });
+}
+
+
+
+// Create creative title slide
+function createTitleSlide(pres, theme) {
+    const slide = pres.addSlide();
+   
+    // Orthodox Christian inspired background
+    slide.background = { fill: 'FDF8E1' }; // Warm cream background
+   
+    // Image placeholder with Orthodox styling
+    slide.addShape('rect', {
+        x: 1.5,
+        y: 0.8,
+        w: 7,
+        h: 2.5,
+        fill: 'FFFFFF',
+        line: { color: 'D4AF37', width: 3 }, // Golden border
+        shadow: { type: 'outer', color: '000000', opacity: 20, blur: 8, offset: 3, angle: 45 }
+    });
+   
+    slide.addText('Insert Orthodox Icon or Image Here', {
+        x: 1.5,
+        y: 1.8,
+        w: 7,
+        h: 0.8,
+        fontSize: 18,
+        color: '8B7355',
+        align: 'center',
+        fontFace: 'Calibri',
+        italic: true
+    });
+   
+    // Orthodox cross symbol
+    slide.addText('☦', {
+        x: 4.2,
+        y: 0.3,
+        w: 1.6,
+        h: 0.5,
+        fontSize: 36,
+        color: 'D4AF37',
+        align: 'center',
+        fontFace: 'Arial'
+    });
+   
+    // Title placeholder with Orthodox styling
+    slide.addShape('rect', {
+        x: 1,
+        y: 3.8,
+        w: 8,
+        h: 1.2,
+        fill: 'F5F5DC',
+        line: { color: 'D4AF37', width: 2 }
+    });
+   
+    slide.addText('Enter your Mezmur title here', {
+        x: 1,
+        y: 4.1,
+        w: 8,
+        h: 0.6,
+        fontSize: 28,
+        bold: true,
+        color: '8B0000', // Dark red
+        align: 'center',
+        fontFace: 'Times New Roman'
+    });
+   
+    // Subtitle
+    slide.addText('Amharic Script with Latin Transliteration', {
+        x: 1,
+        y: 5.3,
+        w: 8,
+        h: 0.6,
+        fontSize: 20,
+        color: '4A4A4A',
+        align: 'center',
+        fontFace: 'Calibri'
+    });
+   
+    // Orthodox decorative elements
+    slide.addText('✠ ✠ ✠', {
+        x: 1,
+        y: 6.2,
+        w: 8,
+        h: 0.4,
+        fontSize: 24,
+        color: 'D4AF37',
+        align: 'center',
+        fontFace: 'Arial'
+    });
+   
+    // Date
     const currentDate = new Date().toLocaleDateString('en-US', {
         year: 'numeric', month: 'long', day: 'numeric'
     });
    
     slide.addText(currentDate, {
         x: 1,
-        y: 6,
+        y: 6.7,
         w: 8,
-        h: 0.5,
-        fontSize: 16,
+        h: 0.3,
+        fontSize: 14,
         color: '666666',
         align: 'center',
         fontFace: 'Calibri'
     });
 }
-
 // Create single pair slide with creative layout
 function createSinglePairSlide(pres, pair, theme, slideNumber) {
     const slide = pres.addSlide();
