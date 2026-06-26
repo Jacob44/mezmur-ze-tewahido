@@ -439,7 +439,6 @@ function createTitleSlide(pres, title, subtitle, dateStr) {
     const slide = pres.addSlide();
     slide.background = { fill: THEME.creamHex };
 
-    // Double gold frame
     slide.addShape(pres.ShapeType.rect, { x: 0.25, y: 0.22, w: 9.5, h: 5.18, fill: { color: THEME.creamHex }, line: { color: THEME.goldHex, width: 2.5 } });
     slide.addShape(pres.ShapeType.rect, { x: 0.42, y: 0.39, w: 9.16, h: 4.84, fill: { type: 'none' }, line: { color: THEME.goldHex, width: 0.75 } });
 
