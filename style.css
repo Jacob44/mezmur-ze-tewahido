@@ -1,34 +1,151 @@
+:root {
+    --cream: #FBF3DD;
+    --paper: #FFFDF6;
+    --blue: #13345F;
+    --red: #9A1B1B;
+    --gold: #C49A2E;
+    --muted: #8A7A55;
+    --border: #E5D9B6;
+}
+
+* { box-sizing: border-box; }
+
 body {
-    font-family: Arial, sans-serif;
-    margin: 40px;
-    max-width: 800px;
+    margin: 0;
+    padding: 32px 16px;
+    font-family: "Noto Serif", Georgia, serif;
+    color: #2c2417;
+    background:
+        radial-gradient(1200px 600px at 50% -10%, #fff7e3 0%, transparent 60%),
+        linear-gradient(160deg, #f3ead0 0%, #efe4c6 100%);
+    min-height: 100vh;
+}
+
+.card {
+    max-width: 760px;
+    margin: 0 auto;
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px 32px 32px;
+    box-shadow: 0 10px 30px rgba(60, 45, 10, 0.12);
+}
+
+.cross {
+    text-align: center;
+    color: var(--gold);
+    font-size: 34px;
+    line-height: 1;
+    margin-bottom: 4px;
 }
 
 h1 {
-    margin-bottom: 20px;
+    margin: 0;
+    text-align: center;
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--blue);
+    letter-spacing: 0.2px;
+}
+
+.tagline {
+    margin: 6px 0 22px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+    font-style: italic;
+}
+
+.meta-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.field { flex: 1; display: flex; flex-direction: column; }
+
+label { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+
+.area-label { display: block; margin-top: 18px; }
+
+input[type="text"] {
+    font-family: inherit;
+    font-size: 16px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+    color: #2c2417;
+}
+
+input[type="text"]:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(196, 154, 46, 0.15);
 }
 
 textarea {
     width: 100%;
     height: 150px;
+    font-family: "Noto Sans Ethiopic", "Noto Serif", serif;
     font-size: 16px;
-    padding: 10px;
-    margin-bottom: 15px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
+    padding: 12px;
+    margin-top: 6px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
     resize: vertical;
+    color: #2c2417;
 }
 
-button {
-    padding: 10px 20px;
-    font-size: 16px;
-    background-color: #2d89ef;
-    color: white;
+#latinOutput { background: #fcf8ee; }
+
+.upload-row {
+    margin-top: 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.btn-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.btn, .upload-btn {
+    font-family: inherit;
+    display: inline-block;
+    padding: 11px 20px;
+    font-size: 15px;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
+    background: var(--blue);
+    color: #fff;
+    transition: transform 0.05s ease, background 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 6px rgba(19, 52, 95, 0.2);
 }
 
-button:hover {
-    background-color: #1d5fbf;
+.btn:hover, .upload-btn:hover { background: #0e2747; }
+.btn:active { transform: translateY(1px); }
+
+.btn-gold { background: var(--gold); color: #3a2c05; box-shadow: 0 2px 6px rgba(196, 154, 46, 0.3); }
+.btn-gold:hover { background: #b1881f; color: #2a2003; }
+
+/* Hide native file input; styled label triggers it. */
+#fileInput {
+    position: absolute;
+    width: 1px; height: 1px;
+    opacity: 0; overflow: hidden;
+}
+
+.file-name { font-size: 13px; color: var(--muted); font-style: italic; }
+
+@media (max-width: 560px) {
+    .meta-row { flex-direction: column; gap: 12px; }
+    .card { padding: 20px 18px 24px; }
 }

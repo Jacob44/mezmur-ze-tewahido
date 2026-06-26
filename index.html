@@ -2,28 +2,54 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Amharic → Latin Transliteration</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@400;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 </head>
 <body>
-    <h1>Amharic → Latin Transliteration</h1>
+    <div class="card">
+        <div class="cross">✝</div>
+        <h1>Amharic → Latin Transliteration</h1>
+        <p class="tagline">Create clean, projectable mezmur sheets and slides</p>
 
-    <textarea id="amharicInput" placeholder="Type or paste Amharic text here..."></textarea>
-    <br>
-    <button id="transliterateBtn">Transliterate</button>
-    <button id="alternateTransliterateBtn">Alternate-Transliterate</button>
-    <br><br>
-    <textarea id="latinOutput" placeholder="Your transliterated text will appear here..." readonly></textarea>
+        <div class="meta-row">
+            <div class="field">
+                <label for="titleInput">Title</label>
+                <input type="text" id="titleInput" placeholder="e.g. አለን  /  Alen">
+            </div>
+            <div class="field">
+                <label for="subtitleInput">Subtitle (optional)</label>
+                <input type="text" id="subtitleInput" placeholder="e.g. Orthodox Mezmur">
+            </div>
+        </div>
 
-    <br>
-    <button id="downloadPDFBtn">Download PDF</button>
-    <button id="downloadPPTBtn">Download PPT</button>
-    <br><br>
+        <div class="upload-row">
+            <label for="fileInput" class="upload-btn">Upload a file (.txt or .docx)</label>
+            <input type="file" id="fileInput" accept=".txt,.docx,text/plain">
+            <span id="fileName" class="file-name"></span>
+        </div>
+
+        <label class="area-label" for="amharicInput">Amharic text</label>
+        <textarea id="amharicInput" placeholder="Type or paste Amharic text here, or upload a file above. Separate verses with a blank line or a row of ===="></textarea>
+
+        <div class="btn-row">
+            <button id="transliterateBtn" class="btn">Transliterate</button>
+            <button id="alternateTransliterateBtn" class="btn">Alternate (Amharic + Latin)</button>
+        </div>
+
+        <label class="area-label" for="latinOutput">Preview</label>
+        <textarea id="latinOutput" placeholder="Your transliterated text will appear here..." readonly></textarea>
+
+        <div class="btn-row">
+            <button id="downloadPDFBtn" class="btn btn-gold">Download PDF</button>
+            <button id="downloadPPTBtn" class="btn btn-gold">Download PPT</button>
+        </div>
+    </div>
 
     <script src="script.js"></script>
-    
 </body>
 </html>
