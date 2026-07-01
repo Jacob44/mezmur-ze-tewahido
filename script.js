@@ -150,18 +150,24 @@ const sixthFormChars = new Set([
     'ክ', 'ኽ', 'ው', 'ዝ', 'ዥ', 'ይ', 'ድ', 'ጅ', 'ግ', 'ጥ', 'ጭ', 'ጵ', 'ጽ', 'ፅ', 'ፍ', 'ፕ'
 ]);
 
-// Theme colors (shared by PDF + PPT).
-const THEME = {
-    cream:  '#FBF3DD',
-    creamHex: 'FBF3DD',
-    blue:   '#13345F',   // Amharic
-    blueHex: '13345F',
-    red:    '#9A1B1B',   // transliteration
-    redHex: '9A1B1B',
-    gold:   '#C49A2E',
-    goldHex: 'C49A2E',
-    muted:  '#8A7A55'
+// ---------------------------------------------------------------------------
+// Color themes. Each palette: bg (background), amh (Amharic), lat (Latin /
+// transliteration), accent (frames + dividers), muted (page numbers / date).
+// Hex values are stored WITHOUT a leading '#'.
+// ---------------------------------------------------------------------------
+const THEMES = {
+    'Parchment & Gold': { bg: 'FBF3DD', amh: '13345F', lat: '9A1B1B', accent: 'C49A2E', muted: '8A7A55' },
+    'Royal Indigo':     { bg: 'F3F1FB', amh: '2A2160', lat: 'A8246B', accent: '6D52C9', muted: '7C7596' },
+    'Forest & Cream':   { bg: 'F1F5EA', amh: '1E4D3B', lat: '9A3B1B', accent: 'B98A2E', muted: '6E7B63' },
+    'Midnight (dark)':  { bg: '141C2E', amh: 'E8EEFB', lat: 'F4B79E', accent: 'D4AF37', muted: '93A0B8' }
 };
+const DEFAULT_THEME = 'Parchment & Gold';
+
+function currentTheme() {
+    const sel = (typeof document !== 'undefined') && document.getElementById('themeSelect');
+    const key = sel && THEMES[sel.value] ? sel.value : DEFAULT_THEME;
+    return THEMES[key];
+}
 
 // ---------------------------------------------------------------------------
 // Core transliteration
@@ -280,6 +286,9 @@ async function downloadPDF() {
     } catch (e) { /* system-font fallback */ }
 
     const { title, subtitle, dateStr } = getMeta();
+    const T = currentTheme();
+    const bgC = '#' + T.bg, amhC = '#' + T.amh, latC = '#' + T.lat, accC = '#' + T.accent, mutedC = '#' + T.muted;
+
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('landscape', 'mm', 'a4');
     const pageW = doc.internal.pageSize.getWidth();
@@ -303,7 +312,7 @@ async function downloadPDF() {
         canvas = document.createElement('canvas');
         canvas.width = cw; canvas.height = ch;
         ctx = canvas.getContext('2d');
-        ctx.fillStyle = THEME.cream; ctx.fillRect(0, 0, cw, ch);
+        ctx.fillStyle = bgC; ctx.fillRect(0, 0, cw, ch);
         ctx.textBaseline = 'top';
         ctx.textAlign = 'center';
         pages.push(canvas);
@@ -331,26 +340,26 @@ async function downloadPDF() {
 
     // ---- Title page ----
     blankPage();
-    ctx.strokeStyle = THEME.gold; ctx.lineWidth = 5; ctx.strokeRect(46, 46, cw - 92, ch - 92);
+    ctx.strokeStyle = accC; ctx.lineWidth = 5; ctx.strokeRect(46, 46, cw - 92, ch - 92);
     ctx.lineWidth = 1.5; ctx.strokeRect(64, 64, cw - 128, ch - 128);
-    ctx.fillStyle = THEME.gold; ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = accC; ctx.textBaseline = 'alphabetic';
     ctx.font = '96px Georgia, serif';
     ctx.fillText('✝', cw / 2, 250);
     ctx.textBaseline = 'top';
-    ctx.fillStyle = THEME.blue;
+    ctx.fillStyle = amhC;
     ctx.font = `bold 66px "Noto Sans Ethiopic", "Noto Serif", serif`;
     let ty = 300;
     wrap(title, `bold 66px "Noto Sans Ethiopic", "Noto Serif", serif`).forEach(l => { ctx.fillText(l, cw / 2, ty); ty += 80; });
     ty += 6;
-    ctx.strokeStyle = THEME.gold; ctx.lineWidth = 3;
+    ctx.strokeStyle = accC; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.moveTo(cw / 2 - 170, ty); ctx.lineTo(cw / 2 + 170, ty); ctx.stroke();
     ty += 26;
     if (subtitle) {
-        ctx.fillStyle = THEME.red;
+        ctx.fillStyle = latC;
         ctx.font = `italic 36px Georgia, serif`;
         wrap(subtitle, `italic 36px Georgia, serif`).forEach(l => { ctx.fillText(l, cw / 2, ty); ty += 46; });
     }
-    ctx.fillStyle = THEME.muted; ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = mutedC; ctx.textBaseline = 'alphabetic';
     ctx.font = '24px Georgia, serif';
     ctx.fillText(dateStr, cw / 2, ch - 96);
 
@@ -358,7 +367,7 @@ async function downloadPDF() {
     const contentPages = packVersesIntoSlides(verses, MAX_ROWS);
     contentPages.forEach((pageVerses) => {
         blankPage();
-        ctx.strokeStyle = THEME.gold; ctx.lineWidth = 2;
+        ctx.strokeStyle = accC; ctx.lineWidth = 2;
         ctx.strokeRect(40, 40, cw - 80, ch - 80);
 
         let blockH = 0;
@@ -368,20 +377,20 @@ async function downloadPDF() {
         pageVerses.forEach((verse, vi) => {
             if (vi > 0) {
                 const midY = y + verseGap / 2;
-                ctx.strokeStyle = THEME.gold; ctx.lineWidth = 1.5;
+                ctx.strokeStyle = accC; ctx.lineWidth = 1.5;
                 ctx.beginPath(); ctx.moveTo(cw / 2 - 90, midY); ctx.lineTo(cw / 2 + 90, midY); ctx.stroke();
                 y += verseGap;
             }
             for (const it of verse) {
                 if (it.amharic) {
-                    ctx.font = amFont; ctx.fillStyle = THEME.blue;
+                    ctx.font = amFont; ctx.fillStyle = amhC;
                     for (const ln of wrap(it.amharic, amFont)) { ctx.fillText(ln, cw / 2, y); y += amLH; }
                     y += intraGap;
-                    ctx.font = enFont; ctx.fillStyle = THEME.red;
+                    ctx.font = enFont; ctx.fillStyle = latC;
                     for (const ln of wrap(it.latin, enFont)) { ctx.fillText(ln, cw / 2, y); y += enLH; }
                     y += pairGap;
                 } else {
-                    ctx.font = enFont; ctx.fillStyle = THEME.red;
+                    ctx.font = enFont; ctx.fillStyle = latC;
                     for (const ln of wrap(it.latin, enFont)) { ctx.fillText(ln, cw / 2, y); y += enLH; }
                     y += pairGap;
                 }
@@ -394,7 +403,7 @@ async function downloadPDF() {
     pages.forEach((cnv, idx) => {
         if (idx > 0) {
             const c = cnv.getContext('2d');
-            c.fillStyle = THEME.muted; c.font = '22px Georgia, serif';
+            c.fillStyle = mutedC; c.font = '22px Georgia, serif';
             c.textAlign = 'center'; c.textBaseline = 'alphabetic';
             c.fillText(`${idx} / ${totalContent}`, cw / 2, ch - 26);
         }
@@ -415,6 +424,7 @@ function downloadPPT() {
         return;
     }
     const { title, subtitle, dateStr } = getMeta();
+    const T = currentTheme();
 
     const pres = new PptxGenJS();
     pres.defineLayout({ name: 'WIDE', width: 10, height: 5.625 });
@@ -422,10 +432,10 @@ function downloadPPT() {
     pres.author = 'Amharic Transliterator';
     pres.title = title;
 
-    createTitleSlide(pres, title, subtitle, dateStr);
+    createTitleSlide(pres, title, subtitle, dateStr, T);
 
     const slides = packVersesIntoSlides(verses, MAX_ROWS);
-    slides.forEach((sv, i) => createContentSlide(pres, sv, i + 1, slides.length));
+    slides.forEach((sv, i) => createContentSlide(pres, sv, i + 1, slides.length, T));
 
     try {
         pres.writeFile({ fileName: `${safeFileName(title)}-${new Date().toISOString().slice(0, 10)}.pptx` });
@@ -435,25 +445,27 @@ function downloadPPT() {
     }
 }
 
-function createTitleSlide(pres, title, subtitle, dateStr) {
+function createTitleSlide(pres, title, subtitle, dateStr, T) {
+    T = T || THEMES[DEFAULT_THEME];
     const slide = pres.addSlide();
-    slide.background = { fill: THEME.creamHex };
+    slide.background = { fill: T.bg };
 
-    slide.addShape(pres.ShapeType.rect, { x: 0.25, y: 0.22, w: 9.5, h: 5.18, fill: { color: THEME.creamHex }, line: { color: THEME.goldHex, width: 2.5 } });
-    slide.addShape(pres.ShapeType.rect, { x: 0.42, y: 0.39, w: 9.16, h: 4.84, fill: { type: 'none' }, line: { color: THEME.goldHex, width: 0.75 } });
+    slide.addShape(pres.ShapeType.rect, { x: 0.25, y: 0.22, w: 9.5, h: 5.18, fill: { color: T.bg }, line: { color: T.accent, width: 2.5 } });
+    slide.addShape(pres.ShapeType.rect, { x: 0.42, y: 0.39, w: 9.16, h: 4.84, fill: { type: 'none' }, line: { color: T.accent, width: 0.75 } });
 
-    slide.addText('✝', { x: 0, y: 0.55, w: 10, h: 0.9, fontSize: 50, color: THEME.goldHex, align: 'center', fontFace: 'Georgia' });
-    slide.addText(title, { x: 0.6, y: 1.75, w: 8.8, h: 1.2, fontSize: 40, bold: true, color: THEME.blueHex, align: 'center', valign: 'middle', fontFace: 'Nyala' });
-    slide.addShape(pres.ShapeType.line, { x: 3.6, y: 3.05, w: 2.8, h: 0, line: { color: THEME.goldHex, width: 1.75 } });
+    slide.addText('✝', { x: 0, y: 0.55, w: 10, h: 0.9, fontSize: 50, color: T.accent, align: 'center', fontFace: 'Georgia' });
+    slide.addText(title, { x: 0.6, y: 1.75, w: 8.8, h: 1.2, fontSize: 40, bold: true, color: T.amh, align: 'center', valign: 'middle', fontFace: 'Nyala' });
+    slide.addShape(pres.ShapeType.line, { x: 3.6, y: 3.05, w: 2.8, h: 0, line: { color: T.accent, width: 1.75 } });
     if (subtitle) {
-        slide.addText(subtitle, { x: 0.6, y: 3.2, w: 8.8, h: 0.7, fontSize: 22, italic: true, color: THEME.redHex, align: 'center', valign: 'middle', fontFace: 'Georgia' });
+        slide.addText(subtitle, { x: 0.6, y: 3.2, w: 8.8, h: 0.7, fontSize: 22, italic: true, color: T.lat, align: 'center', valign: 'middle', fontFace: 'Georgia' });
     }
-    slide.addText(dateStr, { x: 0.6, y: 4.75, w: 8.8, h: 0.4, fontSize: 14, color: '8A7A55', align: 'center', fontFace: 'Georgia' });
+    slide.addText(dateStr, { x: 0.6, y: 4.75, w: 8.8, h: 0.4, fontSize: 14, color: T.muted, align: 'center', fontFace: 'Georgia' });
 }
 
-function createContentSlide(pres, slideVerses, slideNumber, totalSlides) {
+function createContentSlide(pres, slideVerses, slideNumber, totalSlides, T) {
+    T = T || THEMES[DEFAULT_THEME];
     const slide = pres.addSlide();
-    slide.background = { fill: THEME.creamHex };
+    slide.background = { fill: T.bg };
 
     const SLIDE_H = 5.625;
     const amSize = 24, enSize = 19;
@@ -471,23 +483,23 @@ function createContentSlide(pres, slideVerses, slideNumber, totalSlides) {
 
     slideVerses.forEach((verse, vi) => {
         if (vi > 0) {
-            slide.addShape(pres.ShapeType.line, { x: 4.45, y: y + verseGap / 2, w: 1.1, h: 0, line: { color: THEME.goldHex, width: 1 } });
+            slide.addShape(pres.ShapeType.line, { x: 4.45, y: y + verseGap / 2, w: 1.1, h: 0, line: { color: T.accent, width: 1 } });
             y += verseGap;
         }
         verse.forEach(it => {
             if (it.amharic) {
-                slide.addText(it.amharic, { x: 0.5, y, w: 9, h: rowAm, fontSize: amSize, bold: true, color: THEME.blueHex, align: 'center', valign: 'middle', fontFace: 'Nyala' });
+                slide.addText(it.amharic, { x: 0.5, y, w: 9, h: rowAm, fontSize: amSize, bold: true, color: T.amh, align: 'center', valign: 'middle', fontFace: 'Nyala' });
                 y += rowAm + intra;
-                slide.addText(it.latin, { x: 0.5, y, w: 9, h: rowEn, fontSize: enSize, bold: true, color: THEME.redHex, align: 'center', valign: 'middle', fontFace: 'Georgia' });
+                slide.addText(it.latin, { x: 0.5, y, w: 9, h: rowEn, fontSize: enSize, bold: true, color: T.lat, align: 'center', valign: 'middle', fontFace: 'Georgia' });
                 y += rowEn + pairGap;
             } else {
-                slide.addText(it.latin, { x: 0.5, y, w: 9, h: rowEn, fontSize: enSize, bold: true, color: THEME.redHex, align: 'center', valign: 'middle', fontFace: 'Georgia' });
+                slide.addText(it.latin, { x: 0.5, y, w: 9, h: rowEn, fontSize: enSize, bold: true, color: T.lat, align: 'center', valign: 'middle', fontFace: 'Georgia' });
                 y += rowEn + pairGap;
             }
         });
     });
 
-    slide.addText(`${slideNumber} / ${totalSlides}`, { x: 8.7, y: 5.28, w: 1.0, h: 0.3, fontSize: 10, color: '8A7A55', align: 'right', fontFace: 'Georgia' });
+    slide.addText(`${slideNumber} / ${totalSlides}`, { x: 8.7, y: 5.28, w: 1.0, h: 0.3, fontSize: 10, color: T.muted, align: 'right', fontFace: 'Georgia' });
 }
 
 // ---------------------------------------------------------------------------
@@ -521,6 +533,41 @@ async function handleFileUpload(event) {
 }
 
 // ---------------------------------------------------------------------------
+// Theme picker UI
+// ---------------------------------------------------------------------------
+function setupThemePicker() {
+    const sel = document.getElementById('themeSelect');
+    const swatches = document.getElementById('themeSwatches');
+    if (!sel) return;
+
+    Object.keys(THEMES).forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name; opt.textContent = name;
+        sel.appendChild(opt);
+    });
+
+    let saved = DEFAULT_THEME;
+    try { const s = localStorage.getItem('mezmurTheme'); if (s && THEMES[s]) saved = s; } catch (e) {}
+    sel.value = saved;
+
+    function render() {
+        const t = THEMES[sel.value];
+        if (swatches) {
+            swatches.innerHTML = '';
+            [t.bg, t.accent, t.amh, t.lat].forEach(c => {
+                const dot = document.createElement('span');
+                dot.className = 'swatch';
+                dot.style.background = '#' + c;
+                swatches.appendChild(dot);
+            });
+        }
+        try { localStorage.setItem('mezmurTheme', sel.value); } catch (e) {}
+    }
+    sel.addEventListener('change', render);
+    render();
+}
+
+// ---------------------------------------------------------------------------
 // Event wiring (guarded so the file can also be loaded in Node for testing)
 // ---------------------------------------------------------------------------
 if (typeof document !== 'undefined') {
@@ -530,12 +577,13 @@ if (typeof document !== 'undefined') {
         document.getElementById('downloadPDFBtn').addEventListener('click', downloadPDF);
         document.getElementById('downloadPPTBtn').addEventListener('click', downloadPPT);
         document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+        setupThemePicker();
     });
 }
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         transliterateText, hasAmharicLetters, isSeparatorLine,
-        buildVersesFromText, packVersesIntoSlides, createTitleSlide, createContentSlide, THEME
+        buildVersesFromText, packVersesIntoSlides, createTitleSlide, createContentSlide, THEMES
     };
 }
