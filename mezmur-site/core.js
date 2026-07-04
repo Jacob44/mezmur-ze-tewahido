@@ -1,6 +1,6 @@
 // ===========================================================================
 // mezmur-core — shared library (no framework, no build step).
-// Transliteration + verse parsing + themed PDF/PPT export for a song object.
+// Transliteration + verse parsing + themed PDF/PPT export for one or more songs.
 // Exposes window.MezmurCore (browser) and module.exports (Node tests).
 // ===========================================================================
 (function (global) {
@@ -24,7 +24,7 @@
         'ቸ': 'che', 'ቹ': 'chu', 'ቺ': 'chi', 'ቻ': 'cha', 'ቼ': 'che', 'ች': 'ch', 'ቾ': 'cho', 'ቿ': 'chwa',
         'ኀ': 'ha', 'ኁ': 'hu', 'ኂ': 'hi', 'ኃ': 'ha', 'ኄ': 'he', 'ኅ': 'h', 'ኆ': 'ho',
         'ነ': 'ne', 'ኑ': 'nu', 'ኒ': 'ni', 'ና': 'na', 'ኔ': 'ne', 'ን': 'n', 'ኖ': 'no', 'ኗ': 'nwa',
-        'ኘ': 'nye', 'ኙ': 'nyu', 'ኚ': 'nyi', 'ኛ': 'nya', 'ኜ': 'nye', 'ኝ': 'ny', 'ኞ': 'nyo', 'ኟ': 'nywa',
+        'ኘ': 'gne', 'ኙ': 'gnu', 'ኚ': 'gni', 'ኛ': 'gna', 'ኜ': 'gne', 'ኝ': 'gn', 'ኞ': 'gno', 'ኟ': 'gnwa',
         'አ': 'a', 'ኡ': 'u', 'ኢ': 'i', 'ኣ': 'a', 'ኤ': 'e', 'እ': 'e', 'ኦ': 'o',
         'ከ': 'ke', 'ኩ': 'ku', 'ኪ': 'ki', 'ካ': 'ka', 'ኬ': 'ke', 'ክ': 'k', 'ኮ': 'ko',
         'ኰ': 'kwe', 'ኲ': 'kwi', 'ኳ': 'kwa', 'ኴ': 'kwe',
@@ -172,9 +172,11 @@
 
     const MAX_ROWS = 8;
 
-    async function exportSongPDF(song, themeKey) {
-        const verses = buildVersesFromText(song.lyrics);
-        if (!verses.length) { alert('This song has no lyrics to export.'); return; }
+    async function exportSongsPDF(songs, themeKey) {
+        const list = (Array.isArray(songs) ? songs : [songs])
+            .map(song => ({ song, verses: buildVersesFromText(song.lyrics) }))
+            .filter(e => e.verses.length);
+        if (!list.length) { alert('No lyrics to export.'); return; }
         try { await document.fonts.load('bold 46px "Noto Sans Ethiopic"'); await document.fonts.ready; } catch (e) {}
         const T = theme(themeKey);
         const bgC = '#' + T.bg, amhC = '#' + T.amh, latC = '#' + T.lat, accC = '#' + T.accent, mutedC = '#' + T.muted;
@@ -186,9 +188,10 @@
         const amSize = 46, enSize = 36, amLH = 60, enLH = 50, intraGap = 4, pairGap = 20, verseGap = 44;
         const amFont = `bold ${amSize}px "Noto Sans Ethiopic", "Noto Serif", serif`;
         const enFont = `600 ${enSize}px Georgia, "Times New Roman", serif`;
-        const pages = [];
+        const pages = [], labels = [];
         let canvas, ctx;
         function blank() {
+            labels.push(null);
             canvas = document.createElement('canvas'); canvas.width = cw; canvas.height = ch;
             ctx = canvas.getContext('2d'); ctx.fillStyle = bgC; ctx.fillRect(0, 0, cw, ch);
             ctx.textBaseline = 'top'; ctx.textAlign = 'center'; pages.push(canvas);
@@ -205,95 +208,106 @@
                 : wrap(it.latin, enFont).length * enLH + pairGap;
             return h;
         }
-        blank();
-        ctx.strokeStyle = accC; ctx.lineWidth = 5; ctx.strokeRect(46, 46, cw - 92, ch - 92);
-        ctx.lineWidth = 1.5; ctx.strokeRect(64, 64, cw - 128, ch - 128);
-        ctx.fillStyle = accC; ctx.textBaseline = 'alphabetic'; ctx.font = '96px Georgia, serif';
-        ctx.fillText('✝', cw / 2, 250);
-        ctx.textBaseline = 'top'; ctx.fillStyle = amhC; ctx.font = `bold 64px "Noto Sans Ethiopic", "Noto Serif", serif`;
-        let ty = 300;
-        wrap(songTitle(song), `bold 64px "Noto Sans Ethiopic", "Noto Serif", serif`).forEach(l => { ctx.fillText(l, cw / 2, ty); ty += 78; });
-        ty += 6; ctx.strokeStyle = accC; ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.moveTo(cw / 2 - 170, ty); ctx.lineTo(cw / 2 + 170, ty); ctx.stroke(); ty += 26;
-        const sub = songSubtitle(song);
-        if (sub) { ctx.fillStyle = latC; ctx.font = 'italic 34px Georgia, serif'; wrap(sub, 'italic 34px Georgia, serif').forEach(l => { ctx.fillText(l, cw / 2, ty); ty += 44; }); }
-        ctx.fillStyle = mutedC; ctx.textBaseline = 'alphabetic'; ctx.font = '22px Georgia, serif';
-        ctx.fillText(song.year ? String(song.year) : '', cw / 2, ch - 96);
-        const contentPages = packVersesIntoSlides(verses, MAX_ROWS);
-        contentPages.forEach(pv => {
+        for (const { song, verses } of list) {
             blank();
-            ctx.strokeStyle = accC; ctx.lineWidth = 2; ctx.strokeRect(40, 40, cw - 80, ch - 80);
-            let blockH = 0; pv.forEach((v, i) => { blockH += measure(v) + (i < pv.length - 1 ? verseGap : 0); });
-            let y = Math.max(margin + 20, (ch - blockH) / 2);
-            pv.forEach((verse, i) => {
-                if (i > 0) { const m = y + verseGap / 2; ctx.strokeStyle = accC; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(cw / 2 - 90, m); ctx.lineTo(cw / 2 + 90, m); ctx.stroke(); y += verseGap; }
-                for (const it of verse) {
-                    if (it.amharic) {
-                        ctx.font = amFont; ctx.fillStyle = amhC; for (const ln of wrap(it.amharic, amFont)) { ctx.fillText(ln, cw / 2, y); y += amLH; }
-                        y += intraGap; ctx.font = enFont; ctx.fillStyle = latC; for (const ln of wrap(it.latin, enFont)) { ctx.fillText(ln, cw / 2, y); y += enLH; }
-                        y += pairGap;
-                    } else { ctx.font = enFont; ctx.fillStyle = latC; for (const ln of wrap(it.latin, enFont)) { ctx.fillText(ln, cw / 2, y); y += enLH; } y += pairGap; }
-                }
-            });
-        });
-        const total = contentPages.length;
-        pages.forEach((cnv, idx) => {
-            if (idx > 0) { const c = cnv.getContext('2d'); c.fillStyle = mutedC; c.font = '22px Georgia, serif'; c.textAlign = 'center'; c.textBaseline = 'alphabetic'; c.fillText(`${idx} / ${total}`, cw / 2, ch - 26); }
-            if (idx > 0) doc.addPage('a4', 'landscape');
-            doc.addImage(cnv.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pageW, pageH);
-        });
-        doc.save(`${safeFileName(song)}-${new Date().toISOString().slice(0, 10)}.pdf`);
-    }
-
-    function exportSongPPT(song, themeKey) {
-        const verses = buildVersesFromText(song.lyrics);
-        if (!verses.length) { alert('This song has no lyrics to export.'); return; }
-        const T = theme(themeKey);
-        const pres = new PptxGenJS();
-        pres.defineLayout({ name: 'WIDE', width: 10, height: 5.625 });
-        pres.layout = 'WIDE'; pres.author = 'Mezmur Ze Tewahido'; pres.title = songTitle(song);
-        const ts = pres.addSlide();
-        ts.background = { fill: T.bg };
-        ts.addShape(pres.ShapeType.rect, { x: 0.25, y: 0.22, w: 9.5, h: 5.18, fill: { color: T.bg }, line: { color: T.accent, width: 2.5 } });
-        ts.addShape(pres.ShapeType.rect, { x: 0.42, y: 0.39, w: 9.16, h: 4.84, fill: { type: 'none' }, line: { color: T.accent, width: 0.75 } });
-        ts.addText('✝', { x: 0, y: 0.55, w: 10, h: 0.9, fontSize: 50, color: T.accent, align: 'center', fontFace: 'Georgia' });
-        ts.addText(songTitle(song), { x: 0.6, y: 1.75, w: 8.8, h: 1.2, fontSize: 38, bold: true, color: T.amh, align: 'center', valign: 'middle', fontFace: 'Nyala' });
-        ts.addShape(pres.ShapeType.line, { x: 3.6, y: 3.05, w: 2.8, h: 0, line: { color: T.accent, width: 1.75 } });
-        const sub = songSubtitle(song);
-        if (sub) ts.addText(sub, { x: 0.6, y: 3.2, w: 8.8, h: 0.7, fontSize: 22, italic: true, color: T.lat, align: 'center', valign: 'middle', fontFace: 'Georgia' });
-        const slides = packVersesIntoSlides(verses, MAX_ROWS);
-        slides.forEach((sv, idx) => {
-            const slide = pres.addSlide();
-            slide.background = { fill: T.bg };
-            const SLIDE_H = 5.625, amSize = 24, enSize = 19, rowAm = 0.46, rowEn = 0.40, pairGap = 0.07, verseGap = 0.24;
-            const itemH = it => it.amharic ? (rowAm + rowEn + pairGap) : (rowEn + pairGap);
-            let blockH = 0; sv.forEach((verse, i) => { verse.forEach(it => { blockH += itemH(it); }); if (i < sv.length - 1) blockH += verseGap; }); blockH -= pairGap;
-            let y = Math.max(0.35, (SLIDE_H - blockH) / 2);
-            sv.forEach((verse, i) => {
-                if (i > 0) { slide.addShape(pres.ShapeType.line, { x: 4.45, y: y + verseGap / 2, w: 1.1, h: 0, line: { color: T.accent, width: 1 } }); y += verseGap; }
-                verse.forEach(it => {
-                    if (it.amharic) {
-                        slide.addText(it.amharic, { x: 0.5, y, w: 9, h: rowAm, fontSize: amSize, bold: true, color: T.amh, align: 'center', valign: 'middle', fontFace: 'Nyala' });
-                        y += rowAm;
-                        slide.addText(it.latin, { x: 0.5, y, w: 9, h: rowEn, fontSize: enSize, bold: true, color: T.lat, align: 'center', valign: 'middle', fontFace: 'Georgia' });
-                        y += rowEn + pairGap;
-                    } else {
-                        slide.addText(it.latin, { x: 0.5, y, w: 9, h: rowEn, fontSize: enSize, bold: true, color: T.lat, align: 'center', valign: 'middle', fontFace: 'Georgia' });
-                        y += rowEn + pairGap;
+            ctx.strokeStyle = accC; ctx.lineWidth = 5; ctx.strokeRect(46, 46, cw - 92, ch - 92);
+            ctx.lineWidth = 1.5; ctx.strokeRect(64, 64, cw - 128, ch - 128);
+            ctx.fillStyle = accC; ctx.textBaseline = 'alphabetic'; ctx.font = '96px Georgia, serif';
+            ctx.fillText('✝', cw / 2, 250);
+            ctx.textBaseline = 'top'; ctx.fillStyle = amhC; ctx.font = `bold 64px "Noto Sans Ethiopic", "Noto Serif", serif`;
+            let ty = 300;
+            wrap(songTitle(song), `bold 64px "Noto Sans Ethiopic", "Noto Serif", serif`).forEach(l => { ctx.fillText(l, cw / 2, ty); ty += 78; });
+            ty += 6; ctx.strokeStyle = accC; ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.moveTo(cw / 2 - 170, ty); ctx.lineTo(cw / 2 + 170, ty); ctx.stroke(); ty += 26;
+            const sub = songSubtitle(song);
+            if (sub) { ctx.fillStyle = latC; ctx.font = 'italic 34px Georgia, serif'; wrap(sub, 'italic 34px Georgia, serif').forEach(l => { ctx.fillText(l, cw / 2, ty); ty += 44; }); }
+            ctx.fillStyle = mutedC; ctx.textBaseline = 'alphabetic'; ctx.font = '22px Georgia, serif';
+            ctx.fillText(song.year ? String(song.year) : '', cw / 2, ch - 96);
+            const contentPages = packVersesIntoSlides(verses, MAX_ROWS);
+            contentPages.forEach((pv, pi) => {
+                blank();
+                labels[labels.length - 1] = `${pi + 1} / ${contentPages.length}`;
+                ctx.strokeStyle = accC; ctx.lineWidth = 2; ctx.strokeRect(40, 40, cw - 80, ch - 80);
+                let blockH = 0; pv.forEach((v, i) => { blockH += measure(v) + (i < pv.length - 1 ? verseGap : 0); });
+                let y = Math.max(margin + 20, (ch - blockH) / 2);
+                pv.forEach((verse, i) => {
+                    if (i > 0) { const m = y + verseGap / 2; ctx.strokeStyle = accC; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(cw / 2 - 90, m); ctx.lineTo(cw / 2 + 90, m); ctx.stroke(); y += verseGap; }
+                    for (const it of verse) {
+                        if (it.amharic) {
+                            ctx.font = amFont; ctx.fillStyle = amhC; for (const ln of wrap(it.amharic, amFont)) { ctx.fillText(ln, cw / 2, y); y += amLH; }
+                            y += intraGap; ctx.font = enFont; ctx.fillStyle = latC; for (const ln of wrap(it.latin, enFont)) { ctx.fillText(ln, cw / 2, y); y += enLH; }
+                            y += pairGap;
+                        } else { ctx.font = enFont; ctx.fillStyle = latC; for (const ln of wrap(it.latin, enFont)) { ctx.fillText(ln, cw / 2, y); y += enLH; } y += pairGap; }
                     }
                 });
             });
-            slide.addText(`${idx + 1} / ${slides.length}`, { x: 8.7, y: 5.28, w: 1.0, h: 0.3, fontSize: 10, color: T.muted, align: 'right', fontFace: 'Georgia' });
+        }
+        pages.forEach((cnv, idx) => {
+            if (labels[idx]) { const c = cnv.getContext('2d'); c.fillStyle = mutedC; c.font = '22px Georgia, serif'; c.textAlign = 'center'; c.textBaseline = 'alphabetic'; c.fillText(labels[idx], cw / 2, ch - 26); }
+            if (idx > 0) doc.addPage('a4', 'landscape');
+            doc.addImage(cnv.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pageW, pageH);
         });
-        try { pres.writeFile({ fileName: `${safeFileName(song)}-${new Date().toISOString().slice(0, 10)}.pptx` }); }
-        catch (e) { console.error(e); alert('Could not create the PowerPoint file.'); }
+        const base = list.length === 1 ? safeFileName(list[0].song) : `Mezmur-Selection-${list.length}`;
+        doc.save(`${base}-${new Date().toISOString().slice(0, 10)}.pdf`);
     }
+    function exportSongPDF(song, themeKey) { return exportSongsPDF([song], themeKey); }
+
+    function exportSongsPPT(songs, themeKey) {
+        const list = (Array.isArray(songs) ? songs : [songs])
+            .map(song => ({ song, verses: buildVersesFromText(song.lyrics) }))
+            .filter(e => e.verses.length);
+        if (!list.length) { alert('No lyrics to export.'); return; }
+        const T = theme(themeKey);
+        const pres = new PptxGenJS();
+        pres.defineLayout({ name: 'WIDE', width: 10, height: 5.625 });
+        pres.layout = 'WIDE'; pres.author = 'Mezmur Ze Tewahido';
+        pres.title = list.length === 1 ? songTitle(list[0].song) : `Mezmur Selection (${list.length})`;
+        for (const { song, verses } of list) {
+            const ts = pres.addSlide();
+            ts.background = { fill: T.bg };
+            ts.addShape(pres.ShapeType.rect, { x: 0.25, y: 0.22, w: 9.5, h: 5.18, fill: { color: T.bg }, line: { color: T.accent, width: 2.5 } });
+            ts.addShape(pres.ShapeType.rect, { x: 0.42, y: 0.39, w: 9.16, h: 4.84, fill: { type: 'none' }, line: { color: T.accent, width: 0.75 } });
+            ts.addText('✝', { x: 0, y: 0.55, w: 10, h: 0.9, fontSize: 50, color: T.accent, align: 'center', fontFace: 'Georgia' });
+            ts.addText(songTitle(song), { x: 0.6, y: 1.75, w: 8.8, h: 1.2, fontSize: 38, bold: true, color: T.amh, align: 'center', valign: 'middle', fontFace: 'Nyala' });
+            ts.addShape(pres.ShapeType.line, { x: 3.6, y: 3.05, w: 2.8, h: 0, line: { color: T.accent, width: 1.75 } });
+            const sub = songSubtitle(song);
+            if (sub) ts.addText(sub, { x: 0.6, y: 3.2, w: 8.8, h: 0.7, fontSize: 22, italic: true, color: T.lat, align: 'center', valign: 'middle', fontFace: 'Georgia' });
+            const slides = packVersesIntoSlides(verses, MAX_ROWS);
+            slides.forEach((sv, idx) => {
+                const slide = pres.addSlide();
+                slide.background = { fill: T.bg };
+                const SLIDE_H = 5.625, amSize = 24, enSize = 19, rowAm = 0.46, rowEn = 0.40, pairGap = 0.07, verseGap = 0.24;
+                const itemH = it => it.amharic ? (rowAm + rowEn + pairGap) : (rowEn + pairGap);
+                let blockH = 0; sv.forEach((verse, i) => { verse.forEach(it => { blockH += itemH(it); }); if (i < sv.length - 1) blockH += verseGap; }); blockH -= pairGap;
+                let y = Math.max(0.35, (SLIDE_H - blockH) / 2);
+                sv.forEach((verse, i) => {
+                    if (i > 0) { slide.addShape(pres.ShapeType.line, { x: 4.45, y: y + verseGap / 2, w: 1.1, h: 0, line: { color: T.accent, width: 1 } }); y += verseGap; }
+                    verse.forEach(it => {
+                        if (it.amharic) {
+                            slide.addText(it.amharic, { x: 0.5, y, w: 9, h: rowAm, fontSize: amSize, bold: true, color: T.amh, align: 'center', valign: 'middle', fontFace: 'Nyala' });
+                            y += rowAm;
+                            slide.addText(it.latin, { x: 0.5, y, w: 9, h: rowEn, fontSize: enSize, bold: true, color: T.lat, align: 'center', valign: 'middle', fontFace: 'Georgia' });
+                            y += rowEn + pairGap;
+                        } else {
+                            slide.addText(it.latin, { x: 0.5, y, w: 9, h: rowEn, fontSize: enSize, bold: true, color: T.lat, align: 'center', valign: 'middle', fontFace: 'Georgia' });
+                            y += rowEn + pairGap;
+                        }
+                    });
+                });
+                slide.addText(`${idx + 1} / ${slides.length}`, { x: 8.7, y: 5.28, w: 1.0, h: 0.3, fontSize: 10, color: T.muted, align: 'right', fontFace: 'Georgia' });
+            });
+        }
+        const base = list.length === 1 ? safeFileName(list[0].song) : `Mezmur-Selection-${list.length}`;
+        Promise.resolve(pres.writeFile({ fileName: `${base}-${new Date().toISOString().slice(0, 10)}.pptx` }))
+            .catch(e => { console.error(e); alert('Could not create the PowerPoint file.'); });
+    }
+    function exportSongPPT(song, themeKey) { return exportSongsPPT([song], themeKey); }
 
     const api = {
         THEMES, DEFAULT_THEME,
         transliterateText, hasAmharicLetters, isSeparatorLine, isChorusMarker,
         buildVersesFromText, packVersesIntoSlides,
-        songTitle, songSubtitle, exportSongPDF, exportSongPPT
+        songTitle, songSubtitle, exportSongPDF, exportSongPPT, exportSongsPDF, exportSongsPPT
     };
     global.MezmurCore = api;
     if (typeof module !== 'undefined' && module.exports) module.exports = api;

@@ -60,6 +60,16 @@ a{color:inherit;text-decoration:none;}
 .card .pill{background:#f3ead0;color:#7a6a45;border-radius:10px;padding:2px 9px;}
 .empty{grid-column:1/-1;text-align:center;color:var(--muted);font-style:italic;padding:40px;}
 
+/* ---------- MULTI-SELECT ---------- */
+.card .sel{position:absolute;top:12px;right:12px;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--border);
+  background:#fff;color:#fff;cursor:pointer;font-size:14px;line-height:1;padding:0;z-index:2;transition:all .12s;}
+.card .sel:hover{border-color:var(--gold);}
+.card .sel.on{background:var(--blue);border-color:var(--blue);}
+.selbar{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:50;display:flex;gap:10px;align-items:center;
+  flex-wrap:wrap;justify-content:center;background:var(--card);border:1.5px solid var(--gold);border-radius:14px;
+  padding:10px 16px;box-shadow:0 12px 32px rgba(60,45,10,.3);max-width:calc(100vw - 24px);}
+.selbar .cnt{font-size:14px;font-weight:600;color:var(--blue);}
+
 /* ---------- SONG VIEW ---------- */
 .song-wrap{max-width:820px;margin:0 auto;padding:22px 18px 60px;}
 .back{display:inline-flex;align-items:center;gap:6px;color:var(--blue);font-size:15px;margin-bottom:14px;}
@@ -69,9 +79,11 @@ a{color:inherit;text-decoration:none;}
 .song-head h2{font-family:"Noto Sans Ethiopic",serif;margin:4px 0 2px;font-size:34px;color:var(--blue);}
 .song-head .sub{color:var(--muted);font-style:italic;}
 .toolbar{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;margin:16px 0 20px;}
-.toolbar select{font-family:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:#fff;}
+.toolbar select,.selbar select{font-family:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:#fff;}
 .btn{font-family:inherit;font-size:14px;padding:9px 16px;border:none;border-radius:8px;cursor:pointer;background:var(--gold);color:#3a2c05;}
 .btn:hover{background:#b1881f;}
+.btn.danger{background:var(--red);color:#fff;}
+.btn.danger:hover{background:#7d1414;}
 .toggle{display:inline-flex;align-items:center;gap:7px;font-size:14px;cursor:pointer;}
 .lyrics{border-radius:14px;padding:30px 30px;border:1px solid var(--border);}
 .verse{margin-bottom:18px;}
@@ -82,10 +94,17 @@ a{color:inherit;text-decoration:none;}
 
 footer{position:relative;color:#efe2c6;text-align:center;padding:30px 22px;font-size:13px;background-color:#160a07;background-image:linear-gradient(rgba(16,7,4,.82),rgba(16,7,4,.9)),url("hero.webp");background-size:cover;background-position:center 62%;}
 footer .gold{color:var(--gold-2);}
-.browse-wrap{text-align:center;}
-.browse{display:inline-flex;gap:4px;background:#f3ead0;border:1px solid var(--border);border-radius:22px;padding:3px;margin:20px 0 2px;}
-.browse button{font-family:inherit;font-size:13px;padding:6px 16px;border:none;border-radius:18px;background:transparent;color:#6b5c38;cursor:pointer;}
-.browse button.active{background:var(--blue);color:#fff;}
+.addlink{display:inline-block;margin-top:16px;padding:9px 20px;border-radius:22px;border:1px solid var(--gold-2);color:var(--gold-2);font-size:14px;}
+.addlink:hover{background:rgba(228,195,107,.15);}
+.addform label{display:block;font-size:13px;color:var(--muted);margin:14px 0 6px;}
+.addform input,.addform textarea{width:100%;font-family:"Noto Sans Ethiopic","Noto Serif",serif;font-size:16px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;}
+.addform .hint{font-size:12px;color:var(--muted);font-style:italic;margin-bottom:6px;}
+.btn-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px;}
+.addout{margin-top:22px;padding-top:16px;border-top:1px solid var(--border);}
+.batch-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;margin-top:8px;font-size:15px;}
+.batch-row .am{font-family:"Noto Sans Ethiopic",serif;font-weight:700;color:var(--blue);}
+.batch-row .bx{border:none;background:none;color:var(--red);cursor:pointer;font-size:15px;padding:2px 6px;}
+.addout textarea{width:100%;font-family:monospace;font-size:12px;padding:10px;border:1px solid var(--border);border-radius:8px;background:#fbf8ee;}
 @media(max-width:560px){ .hero h1{font-size:34px;} .grid{grid-template-columns:1fr 1fr;gap:12px;} .card .ttl{font-size:18px;} }
 </style>
 </head>
@@ -95,13 +114,6 @@ footer .gold{color:var(--gold-2);}
 <script src="songs.js"></script>
 <script>
 const C = window.MezmurCore;
-const SONGS = (window.SONGS||[]).map((s,i)=>{
-  s.id = s.id || ('song-'+i);
-  if(!s.title) s.title={am:'',latin:''};
-  if(!s.title.latin) s.title.latin = C.transliterateText(s.title.am||'');
-  s._verses = C.buildVersesFromText(s.lyrics);
-  return s;
-});
 
 const CATS = [
   {key:'all',    am:'ሁሉም',  en:'All'},
@@ -118,41 +130,45 @@ function catsOf(s){
   CATS.forEach(c=>{ if(c.kw && c.kw.some(k=>hay.includes(k))) out.push(c.key); });
   return out.length?out:['general'];
 }
-SONGS.forEach(s=>s._cats=catsOf(s));
-const COLLECTIONS = Array.from(new Set(SONGS.map(s=>(s.album&&s.album.latin)||'').filter(Boolean)));
 
-let state={cat:'all',coll:'all',browse:'theme',q:''};
-try{ const t=localStorage.getItem('mezmurTheme'); }catch(e){}
+function initSong(s,i,user){
+  s.id = s.id || ('song-'+i);
+  if(!s.title) s.title={am:'',latin:''};
+  if(!s.title.latin) s.title.latin = C.transliterateText(s.title.am||'');
+  s._verses = C.buildVersesFromText(s.lyrics);
+  s._search = ((s.title.am||'')+' '+(s.title.latin||'')+' '+C.transliterateText(s.title.am||'')+' '+(s.lyrics||'')).toLowerCase();
+  s._cats = catsOf(s);
+  s._user = !!user;
+  return s;
+}
 
-function esc(t){return (t||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+const USER_KEY='mezmurUserSongs';
+function loadUserSongs(){ try{ const a=JSON.parse(localStorage.getItem(USER_KEY)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function persistUserSongs(){
+  try{ localStorage.setItem(USER_KEY, JSON.stringify(userSongs,(k,v)=>k.charAt(0)==='_'?undefined:v)); return true; }
+  catch(e){ alert('Could not save — browser storage is unavailable or full.'); return false; }
+}
+
+let userSongs = loadUserSongs();
+const SONGS = (window.SONGS||[]).map((s,i)=>initSong(s,i,false)).concat(userSongs.map((s,i)=>initSong(s,i,true)));
+
+let state={cat:'all',q:'',showLat:true};
+const selected=new Set(); // song ids picked for a combined PDF/PPT, in selection order
+const addBatch=[]; // transliterated mezmurs queued on the add page for a combined PDF/PPT
+
+function esc(t){return (t||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 
 function filtered(){
   const q=state.q.trim().toLowerCase();
   return SONGS.filter(s=>{
-    if(state.browse==='theme' && state.cat!=='all' && !s._cats.includes(state.cat)) return false;
-    if(state.browse==='coll' && state.coll!=='all' && (((s.album&&s.album.latin)||'')!==state.coll)) return false;
-    if(!q) return true;
-    return ((s.title.am||'')+' '+(s.title.latin||'')+' '+C.transliterateText(s.title.am||'')).toLowerCase().includes(q);
+    if(state.cat!=='all' && !s._cats.includes(state.cat)) return false;
+    return !q || s._search.includes(q);
   });
 }
 
 function homeView(){
-  const list=filtered();
-  const chips=(state.browse==='coll'
-    ? [{k:'all',l:'ሁሉም · All'}].concat(COLLECTIONS.map(c=>({k:c,l:c}))).map(c=>`<button class="chip ${state.coll===c.k?'active':''}" data-coll="${esc(c.k)}">${esc(c.l)}</button>`)
-    : CATS.map(c=>`<button class="chip ${state.cat===c.key?'active':''}" data-cat="${c.key}"><span class="am">${c.am}</span> · ${c.en}</button>`)
-  ).join('');
-  const browseToggle=`<div class="browse-wrap"><div class="browse"><button class="${state.browse==='theme'?'active':''}" data-browse="theme">በጭብጥ · Theme</button><button class="${state.browse==='coll'?'active':''}" data-browse="coll">በስብስብ · Collection</button></div></div>`;
-  const cards=list.map(s=>{
-    const v=s._verses.length;
-    const album=(s.album&&(s.album.latin||s.album.am))||'';
-    return `<div class="card" data-id="${s.id}">
-      <div class="bar"></div><div class="wm">✝</div>
-      <div class="ttl">${esc(s.title.am||s.title.latin)}</div>
-      <div class="lat">${esc(s.title.latin)}</div>
-      <div class="meta"><span class="pill">${esc(album)}</span><span>${v} verses</span></div>
-    </div>`;
-  }).join('') || `<div class="empty">ምንም መዝሙር አልተገኘም — No matches.</div>`;
+  const chips=CATS.map(c=>`<button class="chip ${state.cat===c.key?'active':''}" data-cat="${c.key}"><span class="am">${c.am}</span> · ${c.en}</button>`).join('');
+  const cards=gridHtml();
 
   return `
   <div class="hero">
@@ -160,20 +176,19 @@ function homeView(){
     <h1>መዝሙር ዘተዋህዶ</h1>
     <div class="latin">Mezmur Ze Tewahido</div>
     <div class="tag">የኦርቶዶክስ ተዋህዶ መዝሙራት — ግጥም፣ ፊደል-መለወጥ፣ እና ለስክሪን ዝግጁ ስላይዶች</div>
-    <div class="search"><span class="mag">⌕</span><input id="q" type="search" placeholder="መዝሙር ይፈልጉ —  search in Amharic or Latin…" value="${esc(state.q)}"></div>
+    <div class="search"><span class="mag">⌕</span><input id="q" type="search" placeholder="መዝሙር ይፈልጉ — search in Amharic or Latin…" value="${esc(state.q)}"></div>
     <div class="stat">${SONGS.length} መዝሙራት · ${SONGS.length} mezmurs</div>
+    <a href="#/add" class="addlink">➕ መዝሙር ጨምር · Add mezmur</a>
   </div>
   <div class="wrap">
-    ${browseToggle}
     <div class="chips">${chips}</div>
     <div class="grid">${cards}</div>
   </div>
+  <div id="selbar"></div>
   <footer>✝ &nbsp; <span class="gold">መዝሙር ዘተዋህዶ</span> &nbsp;·&nbsp; Orthodox Tewahedo mezmur — lyrics, transliteration &amp; slides</footer>`;
 }
 
-function songView(id){
-  const s=SONGS.find(x=>x.id===id);
-  if(!s) return homeView();
+function songView(s){
   const T=C.THEMES[themeVal()]||C.THEMES[C.DEFAULT_THEME];
   const album=(s.album&&(s.album.am||s.album.latin))||'';
   let body='';
@@ -181,8 +196,8 @@ function songView(id){
     body+='<div class="verse">';
     v.forEach(it=>{
       if(it.amharic){ body+=`<div class="la" style="color:#${T.amh}">${esc(it.amharic)}</div>`;
-        body+=`<div class="ll lat-line" style="color:#${T.lat}">${esc(it.latin)}</div>`; }
-      else body+=`<div class="ll lat-line" style="color:#${T.lat}">${esc(it.latin)}</div>`;
+        body+=`<div class="ll lat-line" style="color:#${T.lat};${state.showLat?'':'display:none'}">${esc(it.latin)}</div>`; }
+      else body+=`<div class="ll" style="color:#${T.lat}">${esc(it.latin)}</div>`;
     });
     body+='</div>';
   });
@@ -195,10 +210,11 @@ function songView(id){
       <div class="sub">${esc(s.title.latin)}${album?' · '+esc(album):''}</div>
     </div>
     <div class="toolbar">
-      <label class="toggle"><input type="checkbox" id="latToggle" checked> ፊደል-መለወጥ · transliteration</label>
+      <label class="toggle"><input type="checkbox" id="latToggle" ${state.showLat?'checked':''}> ፊደል-መለወጥ · transliteration</label>
       <select id="themeSel">${themeOpts}</select>
       <button class="btn" id="dlPdf">PDF</button>
       <button class="btn" id="dlPpt">PPT</button>
+      ${s._user?'<button class="btn danger" id="delSong">🗑 አጥፋ · Delete</button>':''}
     </div>
     <div class="lyrics" style="background:#${T.bg};border-color:#${T.accent}55">${body}</div>
     ${s.source&&s.source.from?`<div class="src">ምንጭ · Source: ${esc(s.source.from)}</div>`:''}
@@ -211,37 +227,174 @@ function themeVal(){
 }
 
 function render(){
-  const m=location.hash.match(/^#\/song\/(.+)$/);
   const app=document.getElementById('app');
-  app.innerHTML = m ? songView(decodeURIComponent(m[1])) : homeView();
-  if(m){
-    const s=SONGS.find(x=>x.id===decodeURIComponent(m[1]));
+  const hash=location.hash;
+  if(/^#\/add/.test(hash)){ app.innerHTML=addView(); bindAdd(); return; }
+  const m=hash.match(/^#\/song\/(.+)$/);
+  const s=m?SONGS.find(x=>x.id===decodeURIComponent(m[1])):null;
+  app.innerHTML = s ? songView(s) : homeView();
+  if(s){
     const tog=document.getElementById('latToggle');
-    tog.addEventListener('change',e=>{ document.querySelectorAll('.lat-line').forEach(el=>el.style.display=e.target.checked?'':'none'); });
+    tog.addEventListener('change',e=>{ state.showLat=e.target.checked; document.querySelectorAll('.lat-line').forEach(el=>el.style.display=e.target.checked?'':'none'); });
     const sel=document.getElementById('themeSel');
     sel.addEventListener('change',()=>{ try{localStorage.setItem('mezmurTheme',sel.value);}catch(e){} render(); });
     document.getElementById('dlPdf').addEventListener('click',()=>C.exportSongPDF(s,sel.value));
     document.getElementById('dlPpt').addEventListener('click',()=>C.exportSongPPT(s,sel.value));
+    const del=document.getElementById('delSong');
+    if(del) del.addEventListener('click',()=>{
+      if(!confirm('Delete "'+(s.title.am||s.title.latin)+'" from your library?')) return;
+      const i=SONGS.indexOf(s); if(i>-1) SONGS.splice(i,1);
+      selected.delete(s.id);
+      userSongs=userSongs.filter(x=>x.id!==s.id);
+      persistUserSongs();
+      location.hash='#/';
+    });
   } else {
     const q=document.getElementById('q');
     q.addEventListener('input',e=>{ state.q=e.target.value; const g=document.querySelector('.grid'); if(g) g.innerHTML=gridHtml(); bindCards(); });
-    document.querySelectorAll('.chip').forEach(ch=>ch.addEventListener('click',()=>{ if(ch.dataset.cat!==undefined)state.cat=ch.dataset.cat; if(ch.dataset.coll!==undefined)state.coll=ch.dataset.coll; render(); }));
-    document.querySelectorAll('.browse button').forEach(b=>b.addEventListener('click',()=>{ state.browse=b.dataset.browse; render(); }));
+    document.querySelectorAll('.chip').forEach(ch=>ch.addEventListener('click',()=>{ state.cat=ch.dataset.cat; render(); setTimeout(()=>{const qq=document.getElementById('q'); if(qq){qq.focus();qq.value=state.q;}},0); }));
     bindCards();
+    renderSelBar();
   }
 }
 function gridHtml(){
-  const list=filtered();
-  return list.map(s=>{
-    const v=s._verses.length; const album=(s.album&&(s.album.latin||s.album.am))||'';
+  return filtered().map(s=>{
+    const v=s._verses.length;
     return `<div class="card" data-id="${s.id}"><div class="bar"></div><div class="wm">✝</div>
+      <button class="sel ${selected.has(s.id)?'on':''}" data-id="${s.id}" title="ምረጥ · Select for combined PDF/PPT">✓</button>
       <div class="ttl">${esc(s.title.am||s.title.latin)}</div><div class="lat">${esc(s.title.latin)}</div>
-      <div class="meta"><span class="pill">${esc(album)}</span><span>${v} verses</span></div></div>`;
+      <div class="meta" style="justify-content:center;gap:8px"><span>${v} verses</span>${s._user?'<span class="pill">saved</span>':''}</div></div>`;
   }).join('') || `<div class="empty">ምንም መዝሙር አልተገኘም — No matches.</div>`;
 }
-function bindCards(){ document.querySelectorAll('.card').forEach(c=>c.addEventListener('click',()=>{ location.hash='#/song/'+encodeURIComponent(c.dataset.id); })); }
+function bindCards(){
+  document.querySelectorAll('.card').forEach(c=>c.addEventListener('click',()=>{ location.hash='#/song/'+encodeURIComponent(c.dataset.id); }));
+  document.querySelectorAll('.card .sel').forEach(b=>b.addEventListener('click',e=>{
+    e.stopPropagation();
+    if(selected.has(b.dataset.id)) selected.delete(b.dataset.id); else selected.add(b.dataset.id);
+    b.classList.toggle('on',selected.has(b.dataset.id));
+    renderSelBar();
+  }));
+}
+function selSongs(){ return [...selected].map(id=>SONGS.find(s=>s.id===id)).filter(Boolean); }
+function renderSelBar(){
+  const el=document.getElementById('selbar'); if(!el) return;
+  if(!selected.size){ el.innerHTML=''; return; }
+  const themeOpts=Object.keys(C.THEMES).map(k=>`<option ${k===themeVal()?'selected':''}>${k}</option>`).join('');
+  el.innerHTML=`<div class="selbar">
+    <span class="cnt">${selected.size} የተመረጡ · selected</span>
+    <select id="selTheme">${themeOpts}</select>
+    <button class="btn" id="selPdf">⬇ PDF</button>
+    <button class="btn" id="selPpt">⬇ PPT</button>
+    <button class="btn danger" id="selClear">✕ አጽዳ</button></div>`;
+  const sel=document.getElementById('selTheme');
+  sel.addEventListener('change',()=>{ try{localStorage.setItem('mezmurTheme',sel.value);}catch(e){} });
+  document.getElementById('selPdf').addEventListener('click',()=>C.exportSongsPDF(selSongs(),sel.value));
+  document.getElementById('selPpt').addEventListener('click',()=>C.exportSongsPPT(selSongs(),sel.value));
+  document.getElementById('selClear').addEventListener('click',()=>{
+    selected.clear();
+    document.querySelectorAll('.card .sel').forEach(b=>b.classList.remove('on'));
+    renderSelBar();
+  });
+}
 
-window.addEventListener('hashchange',render);
+function addView(){
+  const themeOpts=Object.keys(C.THEMES).map(k=>`<option ${k===themeVal()?'selected':''}>${k}</option>`).join('');
+  return `
+  <div class="song-wrap">
+    <a class="back" href="#/">← ወደ ቤተ-መዝሙር · Library</a>
+    <div class="song-head"><div class="cross">✝</div><h2>መዝሙር ጨምር</h2><div class="sub">Add / transliterate a mezmur</div></div>
+    <div class="addform">
+      <label>ርዕስ · Title (Amharic)</label>
+      <input id="aTitle" type="text" placeholder="ለምሳሌ ኪዳነ ምህረት እመቤት">
+      <label>ግጥም · Lyrics</label>
+      <div class="hint">Paste the Amharic lyrics; separate verses with a blank line. If you paste the transliteration under each Amharic line it is kept; otherwise it is auto-generated.</div>
+      <textarea id="aLyrics" rows="12" placeholder="የመዝሙሩ ግጥም እዚህ ይለጥፉ..."></textarea>
+      <div class="btn-row">
+        <button class="btn" id="aSave">💾 አስቀምጥ · Save to library</button>
+        <select id="themeSel">${themeOpts}</select>
+        <button class="btn" id="aPdf">PDF</button>
+        <button class="btn" id="aPpt">PPT</button>
+        <button class="btn" id="aAddBatch">➕ ወደ ስብስብ · Add to batch</button>
+      </div>
+      <div class="hint" style="margin-top:8px">Saving adds the mezmur to your library instantly (stored in this browser). “Add to batch” queues this mezmur so several can be downloaded together as one PDF/PPT.</div>
+      <div id="aBatchBox"></div>
+    </div>
+    <div id="aPreviewBox"></div>
+    <div class="addout" id="aOutWrap" style="display:none">
+      <label>To add it to the site permanently for everyone: paste this record into songs.js before the closing <code>]</code>, or download the JSON.</label>
+      <textarea id="aOut" rows="10" readonly></textarea>
+      <div class="btn-row"><button class="btn" id="aCopy">Copy record</button><button class="btn" id="aJson">Download .json</button></div>
+    </div>
+  </div>`;
+}
+function bindAdd(){
+  const titleEl=document.getElementById('aTitle'), lyrEl=document.getElementById('aLyrics'), sel=document.getElementById('themeSel');
+  const box=document.getElementById('aPreviewBox'), outWrap=document.getElementById('aOutWrap'), out=document.getElementById('aOut');
+  function makeSong(){
+    const am=(titleEl.value||'').trim(); const lyrics=lyrEl.value||'';
+    const slug=(C.transliterateText(am).replace(/[^A-Za-z0-9]+/g,'-').replace(/^-+|-+$/g,'').toLowerCase())||('m'+Date.now());
+    return {id:'user-'+slug,title:{am,latin:C.transliterateText(am)},singer:{am:'',latin:''},album:{am:'',latin:''},year:null,track:null,language:'am',media:{youtube:''},tags:['Orthodox','Tewahedo','Amharic'],source:{from:'',url:'',license:''},lyrics};
+  }
+  function preview(){
+    const song=makeSong(); const T=C.THEMES[sel.value]||C.THEMES[C.DEFAULT_THEME];
+    const verses=C.buildVersesFromText(song.lyrics); const slides=C.packVersesIntoSlides(verses,8).length;
+    let body='';
+    verses.forEach(v=>{ body+='<div class="verse">'; v.forEach(it=>{ if(it.amharic){body+=`<div class="la" style="color:#${T.amh}">${esc(it.amharic)}</div>`;body+=`<div class="ll" style="color:#${T.lat}">${esc(it.latin)}</div>`;} else body+=`<div class="ll" style="color:#${T.lat}">${esc(it.latin)}</div>`; }); body+='</div>'; });
+    box.innerHTML = verses.length ? `<div class="src" style="text-align:left">Preview · ${slides+1} slides (title + ${slides})</div><div class="lyrics" style="background:#${T.bg};border-color:#${T.accent}55">${body}</div>` : '<div class="empty">Paste some Amharic lyrics to preview.</div>';
+    const q=s=>JSON.stringify(s);
+    out.value='    {\n'+
+      '        id: '+q(song.id)+',\n'+
+      '        title: { am: '+q(song.title.am)+', latin: "" },\n'+
+      '        singer: { am: "", latin: "" },\n'+
+      '        album: { am: "", latin: "" },\n'+
+      '        year: null, track: null, language: "am",\n'+
+      '        media: { youtube: "" },\n'+
+      '        tags: ["Orthodox", "Tewahedo", "Amharic"],\n'+
+      '        source: { from: "", url: "", license: "" },\n'+
+      '        lyrics: '+q(song.lyrics)+'\n'+
+      '    },';
+    outWrap.style.display=(song.title.am||song.lyrics.trim())?'block':'none';
+  }
+  document.getElementById('aSave').addEventListener('click',()=>{
+    const song=makeSong();
+    if(!song.title.am.trim()){ alert('Please add a title first — እባክዎ ርዕስ ያስገቡ።'); titleEl.focus(); return; }
+    if(!C.buildVersesFromText(song.lyrics).length){ alert('Please add the lyrics first — እባክዎ ግጥሙን ያስገቡ።'); lyrEl.focus(); return; }
+    let id=song.id, n=2;
+    while(SONGS.some(x=>x.id===id)) id=song.id+'-'+(n++);
+    song.id=id;
+    userSongs.push(song);
+    if(!persistUserSongs()){ userSongs.pop(); return; }
+    SONGS.push(initSong(song,SONGS.length,true));
+    location.hash='#/song/'+encodeURIComponent(song.id);
+  });
+  function renderBatch(){
+    const box=document.getElementById('aBatchBox');
+    if(!addBatch.length){ box.innerHTML=''; return; }
+    const rows=addBatch.map((s,i)=>`<div class="batch-row"><span>${i+1}. <span class="am">${esc(s.title.am||s.title.latin)}</span></span><button class="bx" data-i="${i}" title="Remove">✕</button></div>`).join('');
+    box.innerHTML=`<div class="addout"><label>ስብስብ · Batch — ${addBatch.length} mezmurs, downloaded together as one file:</label>${rows}
+      <div class="btn-row"><button class="btn" id="bPdf">⬇ PDF (${addBatch.length})</button><button class="btn" id="bPpt">⬇ PPT (${addBatch.length})</button><button class="btn danger" id="bClear">✕ አጽዳ · Clear</button></div></div>`;
+    box.querySelectorAll('.bx').forEach(b=>b.addEventListener('click',()=>{ addBatch.splice(+b.dataset.i,1); renderBatch(); }));
+    document.getElementById('bPdf').addEventListener('click',()=>C.exportSongsPDF(addBatch,sel.value));
+    document.getElementById('bPpt').addEventListener('click',()=>C.exportSongsPPT(addBatch,sel.value));
+    document.getElementById('bClear').addEventListener('click',()=>{ addBatch.length=0; renderBatch(); });
+  }
+  document.getElementById('aAddBatch').addEventListener('click',()=>{
+    const song=makeSong();
+    if(!song.title.am.trim()){ alert('Please add a title first — እባክዎ ርዕስ ያስገቡ።'); titleEl.focus(); return; }
+    if(!C.buildVersesFromText(song.lyrics).length){ alert('Please add the lyrics first — እባክዎ ግጥሙን ያስገቡ።'); lyrEl.focus(); return; }
+    addBatch.push(song);
+    titleEl.value=''; lyrEl.value=''; preview(); renderBatch(); titleEl.focus();
+  });
+  renderBatch();
+  lyrEl.addEventListener('input',preview); titleEl.addEventListener('input',preview);
+  sel.addEventListener('change',()=>{ try{localStorage.setItem('mezmurTheme',sel.value);}catch(e){} preview(); });
+  document.getElementById('aPdf').addEventListener('click',()=>C.exportSongPDF(makeSong(),sel.value));
+  document.getElementById('aPpt').addEventListener('click',()=>C.exportSongPPT(makeSong(),sel.value));
+  document.getElementById('aCopy').addEventListener('click',()=>{ out.select(); if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(out.value).catch(()=>document.execCommand('copy')); else document.execCommand('copy'); });
+  document.getElementById('aJson').addEventListener('click',()=>{ const song=makeSong(); const b=new Blob([JSON.stringify(song,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=(song.id||'mezmur')+'.json'; a.click(); URL.revokeObjectURL(a.href); });
+}
+
+window.addEventListener('hashchange',()=>{ render(); window.scrollTo(0,0); });
 render();
 </script>
 </body>
