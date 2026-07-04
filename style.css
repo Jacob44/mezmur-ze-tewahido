@@ -154,6 +154,10 @@ textarea {
 .btn-gold { background: var(--gold); color: #3a2c05; box-shadow: 0 2px 6px rgba(196, 154, 46, 0.3); }
 .btn-gold:hover { background: #b1881f; color: #2a2003; }
 
+.site-link { margin: 22px 0 0; text-align: center; font-size: 14px; }
+.site-link a { color: var(--blue); text-decoration: none; border-bottom: 1px solid var(--gold); padding-bottom: 2px; }
+.site-link a:hover { color: var(--gold); }
+
 /* Hide native file input; styled label triggers it. */
 #fileInput {
     position: absolute;
