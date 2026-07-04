@@ -1,2 +1,4 @@
-/.claude
+# Claude / local tooling — not part of the published site
+.claude/
 CLAUDE.md
+MEZMUR_SITE_SPEC.md
