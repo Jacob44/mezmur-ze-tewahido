@@ -2,13 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "mezmur-site",
-      "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "4173", "--directory", "mezmur-site"],
-      "port": 4173
-    },
-    {
-      "name": "root-site",
+      "name": "site",
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "4174"],
       "port": 4174
