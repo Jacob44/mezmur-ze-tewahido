@@ -73,6 +73,23 @@
         }
         return out.join('');
     }
+    // Names / divine titles capitalized in auto-generated transliteration.
+    // NAMES_ANY match anywhere inside a word (handles fused prefixes:
+    // beEgziabher, yeMariam); NAMES_START only at a word start, so suffixed
+    // forms still work (amlakachin -> Amlakachin) without false positives.
+    const NAMES_ANY = ['egziabher', 'medhanealem', 'medhanialem', 'kristos', 'kiristos', 'iyesus', 'amanuel',
+        'mariam', 'maryam', 'gabriel', 'gebriel', 'gebirel', 'mikael', 'tewahido', 'tewahdo', 'yerusalem',
+        'kidane', 'mihret', 'silase', 'selassie', 'dingil', 'dinigil', 'amlak', 'dawit', 'israel', 'esrael', 'emebet'];
+    const NAMES_START = ['geta', 'hana', 'yared'];
+    const reNamesAny = new RegExp('(' + NAMES_ANY.join('|') + ')', 'gi');
+    const reNamesStart = new RegExp('\\b(' + NAMES_START.join('|') + ')', 'gi');
+    function capitalizeLatin(s) {
+        return (s || '')
+            .replace(reNamesAny, m => m.charAt(0).toUpperCase() + m.slice(1))
+            .replace(reNamesStart, m => m.charAt(0).toUpperCase() + m.slice(1))
+            .replace(/^(\s*)([a-z])/, (m, sp, c) => sp + c.toUpperCase());
+    }
+
     function hasAmharicLetters(s) { return /[ሀ-ፚᎀ-᎟꬀-꬯]/.test(s); }
     function isSeparatorLine(s) {
         const t = (s || '').trim();
@@ -104,7 +121,7 @@
                     v.push({ amharic: line, latin: next });
                     i++;
                 } else {
-                    v.push({ amharic: line, latin: transliterateText(line) });
+                    v.push({ amharic: line, latin: capitalizeLatin(transliterateText(line)) });
                 }
             } else {
                 v.push({ amharic: '', latin: line });
@@ -299,7 +316,7 @@
 
     const api = {
         THEMES, DEFAULT_THEME,
-        transliterateText, hasAmharicLetters, isSeparatorLine, isChorusMarker,
+        transliterateText, capitalizeLatin, hasAmharicLetters, isSeparatorLine, isChorusMarker,
         buildVersesFromText, packVersesIntoSlides,
         songTitle, songSubtitle, exportSongPDF, exportSongPPT, exportSongsPDF, exportSongsPPT
     };

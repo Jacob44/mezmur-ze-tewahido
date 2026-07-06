@@ -152,7 +152,7 @@ function catsOf(s){
 function initSong(s,i,user){
   s.id = s.id || ('song-'+i);
   if(!s.title) s.title={am:'',latin:''};
-  if(!s.title.latin) s.title.latin = C.transliterateText(s.title.am||'');
+  if(!s.title.latin) s.title.latin = C.capitalizeLatin(C.transliterateText(s.title.am||''));
   s._verses = C.buildVersesFromText(s.lyrics);
   s._search = ((s.title.am||'')+' '+(s.title.latin||'')+' '+C.transliterateText(s.title.am||'')+' '+(s.lyrics||'')).toLowerCase();
   s._cats = catsOf(s);
@@ -357,7 +357,7 @@ function bindAdd(){
   function makeSong(){
     const am=(titleEl.value||'').trim(); const lyrics=lyrEl.value||'';
     const slug=(C.transliterateText(am).replace(/[^A-Za-z0-9]+/g,'-').replace(/^-+|-+$/g,'').toLowerCase())||('m'+Date.now());
-    return {id:'user-'+slug,title:{am,latin:C.transliterateText(am)},singer:{am:'',latin:''},album:{am:'',latin:''},year:null,track:null,language:'am',media:{youtube:''},tags:['Orthodox','Tewahedo','Amharic'],source:{from:'',url:'',license:''},lyrics};
+    return {id:'user-'+slug,title:{am,latin:C.capitalizeLatin(C.transliterateText(am))},singer:{am:'',latin:''},album:{am:'',latin:''},year:null,track:null,language:'am',media:{youtube:''},tags:['Orthodox','Tewahedo','Amharic'],source:{from:'',url:'',license:''},lyrics};
   }
   function preview(){
     const song=makeSong(); const T=C.THEMES[sel.value]||C.THEMES[C.DEFAULT_THEME];
