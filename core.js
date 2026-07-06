@@ -62,8 +62,14 @@
     const DEFAULT_THEME = 'Parchment & Gold';
     function theme(key) { return THEMES[key] || THEMES[DEFAULT_THEME]; }
 
+    // Words with an established English spelling, substituted before the
+    // per-letter transliteration (works inside fused forms too:
+    // የኢትዮጵያ -> yeEthiopia, ኢትዮጵያዊ -> Ethiopiawi).
+    const DIRECT_WORDS = { 'ኢትዮጵያ': 'Ethiopia' };
     function transliterateText(text) {
-        const chars = [...(text || '')];
+        text = text || '';
+        for (const k in DIRECT_WORDS) text = text.split(k).join(DIRECT_WORDS[k]);
+        const chars = [...text];
         const out = new Array(chars.length);
         for (let i = 0; i < chars.length; i++) {
             const c = chars[i];
