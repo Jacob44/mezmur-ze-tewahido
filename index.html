@@ -137,6 +137,7 @@ const CATS = [
   {key:'all',    am:'ሁሉም',  en:'All'},
   {key:'marian', am:'ማርያም', en:'Marian',     kw:['ማርያም','እመቤት','ድንግል','እናት','ኪዳነ','አይናችን ነሽ','ለማርያም']},
   {key:'feast',  am:'በዓላት', en:'Feasts',     kw:['ተነሥቷል','ትንሳኤ','ሆሳዕና','ፍስሀ','ልደት','ጌታዬ ሆነ','ዕርገት','ዐረገ']},
+  {key:'wedding',am:'ሠርግ',  en:'Wedding',    kw:['ሙሽራ','ሙሽሪት','ሙሽሮ','ሠርግ','ሰርግ','መርዓዊ','መርአዊ','ተክሊል','ከብካብ','ጋብቻ']},
   {key:'trinity',am:'ስላሴ',  en:'Trinity',    kw:['ስላሴ']},
   {key:'saints', am:'ቅዱሳን', en:'Saints',     kw:['ጴጥሮስ','ጳውሎስ','ዮሐንስ','ያሬድ','ገብርኤል','ሚካኤል','ዶኪማስ','መልአከ','እስራኤል']},
   {key:'praise', am:'ምስጋና', en:'Praise',     kw:['ስብሐት','ምስጋና','ተመስገን','ደስ ይበለን','አመስግኑ','አዳነኝ','ቸርነት']},
@@ -145,7 +146,10 @@ const CATS = [
 function catsOf(s){
   const hay=(s.title.am||'')+' '+(s.lyrics||'').slice(0,160);
   const out=[];
-  CATS.forEach(c=>{ if(c.kw && c.kw.some(k=>hay.includes(k))) out.push(c.key); });
+  CATS.forEach(c=>{
+    const tagged=Array.isArray(s.tags)&&s.tags.includes(c.key);
+    if(tagged || (c.kw && c.kw.some(k=>hay.includes(k)))) out.push(c.key);
+  });
   return out.length?out:['general'];
 }
 
