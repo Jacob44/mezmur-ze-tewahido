@@ -24,7 +24,7 @@ a{color:inherit;text-decoration:none;}
   background-image:linear-gradient(180deg,rgba(16,7,4,.62),rgba(16,7,4,.50) 42%,rgba(16,7,4,.86)),url("hero.webp");
   background-size:cover;background-position:center 32%;background-repeat:no-repeat;
   padding:66px 20px 54px;border-bottom:3px solid var(--gold);}
-.hero::before,.hero::after{content:"✝";position:absolute;color:rgba(247,236,205,.07);font-size:210px;line-height:1;}
+.hero::before,.hero::after{content:"✝︎";position:absolute;color:rgba(247,236,205,.07);font-size:210px;line-height:1;}
 .hero::before{left:-30px;top:-40px;}
 .hero::after{right:-30px;bottom:-90px;}
 .hero .cross{font-size:40px;color:var(--gold-2);margin-bottom:6px;}
@@ -190,20 +190,20 @@ function homeView(){
 
   return `
   <div class="hero">
-    <div class="cross">✝</div>
+    <div class="cross">✝︎</div>
     <h1>መዝሙር ዘተዋህዶ</h1>
     <div class="latin">Mezmur Ze Tewahido</div>
     <div class="tag">የኦርቶዶክስ ተዋህዶ መዝሙራት — ግጥም፣ ፊደል-መለወጥ፣ እና ለስክሪን ዝግጁ ስላይዶች</div>
     <div class="search"><span class="mag">⌕</span><input id="q" type="search" placeholder="መዝሙር ይፈልጉ — search in Amharic or Latin…" value="${esc(state.q)}"></div>
     <div class="stat">${SONGS.length} መዝሙራት · ${SONGS.length} mezmurs</div>
-    <a href="#/add" class="addlink">➕ መዝሙር ጨምር · Add / transliterate</a>
+    <a href="#/add" class="addlink">+ መዝሙር ጨምር · Add / transliterate</a>
   </div>
   <div class="wrap">
     <div class="chips">${chips}</div>
     <div class="grid">${cards}</div>
   </div>
   <div id="selbar"></div>
-  <footer>✝ &nbsp; <span class="gold">መዝሙር ዘተዋህዶ</span> &nbsp;·&nbsp; Orthodox Tewahedo mezmur — lyrics, transliteration &amp; slides</footer>`;
+  <footer>✝︎ &nbsp; <span class="gold">መዝሙር ዘተዋህዶ</span> &nbsp;·&nbsp; Orthodox Tewahedo mezmur — lyrics, transliteration &amp; slides</footer>`;
 }
 
 function songView(s){
@@ -223,7 +223,7 @@ function songView(s){
   return `
   <div class="song-wrap">
     <a class="back" href="#/">← ወደ ቤተ-መዝሙር · Library</a>
-    <div class="song-head"><div class="cross">✝</div>
+    <div class="song-head"><div class="cross">✝︎</div>
       <h2>${esc(s.title.am||s.title.latin)}</h2>
       <div class="sub">${esc(s.title.latin)}${album?' · '+esc(album):''}</div>
     </div>
@@ -278,7 +278,7 @@ function render(){
 function gridHtml(){
   return filtered().map(s=>{
     const v=s._verses.length;
-    return `<div class="card" data-id="${s.id}"><div class="bar"></div><div class="wm">✝</div>
+    return `<div class="card" data-id="${s.id}"><div class="bar"></div><div class="wm">✝︎</div>
       <button class="sel ${selected.has(s.id)?'on':''}" data-id="${s.id}" title="ምረጥ · Select for combined PDF/PPT">✓</button>
       <div class="ttl">${esc(s.title.am||s.title.latin)}</div><div class="lat">${esc(s.title.latin)}</div>
       <div class="meta" style="justify-content:center;gap:8px"><span>${v} verses</span>${s._user?'<span class="pill">saved</span>':''}</div></div>`;
@@ -301,8 +301,8 @@ function renderSelBar(){
   el.innerHTML=`<div class="selbar">
     <span class="cnt">${selected.size} የተመረጡ · selected</span>
     <select id="selTheme">${themeOpts}</select>
-    <button class="btn" id="selPdf">⬇ PDF</button>
-    <button class="btn" id="selPpt">⬇ PPT</button>
+    <button class="btn" id="selPdf">↓ PDF</button>
+    <button class="btn" id="selPpt">↓ PPT</button>
     <button class="btn danger" id="selClear">✕ አጽዳ</button></div>`;
   const sel=document.getElementById('selTheme');
   sel.addEventListener('change',()=>{ try{localStorage.setItem('mezmurTheme',sel.value);}catch(e){} });
@@ -320,7 +320,7 @@ function addView(){
   return `
   <div class="song-wrap">
     <a class="back" href="#/">← ወደ ቤተ-መዝሙር · Library</a>
-    <div class="song-head"><div class="cross">✝</div><h2>መዝሙር ጨምር</h2><div class="sub">Add / transliterate a mezmur</div></div>
+    <div class="song-head"><div class="cross">✝︎</div><h2>መዝሙር ጨምር</h2><div class="sub">Add / transliterate a mezmur</div></div>
     <div class="addform">
       <label>ርዕስ · Title (Amharic)</label>
       <input id="aTitle" type="text" placeholder="ለምሳሌ ኪዳነ ምህረት እመቤት">
@@ -338,7 +338,7 @@ function addView(){
         <select id="themeSel">${themeOpts}</select>
         <button class="btn" id="aPdf">PDF</button>
         <button class="btn" id="aPpt">PPT</button>
-        <button class="btn" id="aAddBatch">➕ ወደ ስብስብ · Add to batch</button>
+        <button class="btn" id="aAddBatch">+ ወደ ስብስብ · Add to batch</button>
       </div>
       <div class="hint" style="margin-top:8px">Saving adds the mezmur to your library instantly (stored in this browser). “Add to batch” queues this mezmur so several can be downloaded together as one PDF/PPT.</div>
       <div id="aBatchBox"></div>
@@ -396,7 +396,7 @@ function bindAdd(){
     if(!addBatch.length){ box.innerHTML=''; return; }
     const rows=addBatch.map((s,i)=>`<div class="batch-row"><span>${i+1}. <span class="am">${esc(s.title.am||s.title.latin)}</span></span><button class="bx" data-i="${i}" title="Remove">✕</button></div>`).join('');
     box.innerHTML=`<div class="addout"><label>ስብስብ · Batch — ${addBatch.length} mezmurs, downloaded together as one file:</label>${rows}
-      <div class="btn-row"><button class="btn" id="bPdf">⬇ PDF (${addBatch.length})</button><button class="btn" id="bPpt">⬇ PPT (${addBatch.length})</button><button class="btn danger" id="bClear">✕ አጽዳ · Clear</button></div></div>`;
+      <div class="btn-row"><button class="btn" id="bPdf">↓ PDF (${addBatch.length})</button><button class="btn" id="bPpt">↓ PPT (${addBatch.length})</button><button class="btn danger" id="bClear">✕ አጽዳ · Clear</button></div></div>`;
     box.querySelectorAll('.bx').forEach(b=>b.addEventListener('click',()=>{ addBatch.splice(+b.dataset.i,1); renderBatch(); }));
     document.getElementById('bPdf').addEventListener('click',()=>C.exportSongsPDF(addBatch,sel.value));
     document.getElementById('bPpt').addEventListener('click',()=>C.exportSongsPPT(addBatch,sel.value));

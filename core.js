@@ -213,7 +213,7 @@
             ctx.strokeStyle = accC; ctx.lineWidth = 5; ctx.strokeRect(46, 46, cw - 92, ch - 92);
             ctx.lineWidth = 1.5; ctx.strokeRect(64, 64, cw - 128, ch - 128);
             ctx.fillStyle = accC; ctx.textBaseline = 'alphabetic'; ctx.font = '96px Georgia, serif';
-            ctx.fillText('✝', cw / 2, 250);
+            ctx.fillText('✝︎', cw / 2, 250);
             ctx.textBaseline = 'top'; ctx.fillStyle = amhC; ctx.font = `bold 64px "Noto Sans Ethiopic", "Noto Serif", serif`;
             let ty = 300;
             wrap(songTitle(song), `bold 64px "Noto Sans Ethiopic", "Noto Serif", serif`).forEach(l => { ctx.fillText(l, cw / 2, ty); ty += 78; });
@@ -267,7 +267,7 @@
             ts.background = { fill: T.bg };
             ts.addShape(pres.ShapeType.rect, { x: 0.25, y: 0.22, w: 9.5, h: 5.18, fill: { color: T.bg }, line: { color: T.accent, width: 2.5 } });
             ts.addShape(pres.ShapeType.rect, { x: 0.42, y: 0.39, w: 9.16, h: 4.84, fill: { type: 'none' }, line: { color: T.accent, width: 0.75 } });
-            ts.addText('✝', { x: 0, y: 0.55, w: 10, h: 0.9, fontSize: 50, color: T.accent, align: 'center', fontFace: 'Georgia' });
+            ts.addText('✝︎', { x: 0, y: 0.55, w: 10, h: 0.9, fontSize: 50, color: T.accent, align: 'center', fontFace: 'Georgia' });
             ts.addText(songTitle(song), { x: 0.6, y: 1.75, w: 8.8, h: 1.2, fontSize: 38, bold: true, color: T.amh, align: 'center', valign: 'middle', fontFace: 'Nyala' });
             ts.addShape(pres.ShapeType.line, { x: 3.6, y: 3.05, w: 2.8, h: 0, line: { color: T.accent, width: 1.75 } });
             const sub = songSubtitle(song);
