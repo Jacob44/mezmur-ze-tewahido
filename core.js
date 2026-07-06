@@ -65,7 +65,14 @@
     // Words with an established English spelling, substituted before the
     // per-letter transliteration (works inside fused forms too:
     // የኢትዮጵያ -> yeEthiopia, ኢትዮጵያዊ -> Ethiopiawi).
-    const DIRECT_WORDS = { 'ኢትዮጵያ': 'Ethiopia' };
+    const DIRECT_WORDS = {
+        'ኢትዮጵያ': 'Ethiopia',
+        'ናዝሬት': 'Nazareth',
+        'ቤተልሔም': 'Bethlehem',
+        'ቤተ ልሔም': 'Bethlehem',
+        'ግብጽ': 'Egypt',
+        'ግብፅ': 'Egypt'
+    };
     function transliterateText(text) {
         text = text || '';
         for (const k in DIRECT_WORDS) text = text.split(k).join(DIRECT_WORDS[k]);
@@ -198,7 +205,7 @@
         const margin = 78, maxW = cw - margin * 2;
         const amSize = 58, enSize = 46, amLH = 74, enLH = 60, intraGap = 6, pairGap = 26, verseGap = 52;
         const amFont = `bold ${amSize}px "Noto Sans Ethiopic", "Noto Serif", serif`;
-        const enFont = `600 ${enSize}px Georgia, "Times New Roman", serif`;
+        const enFont = `bold ${enSize}px Georgia, "Times New Roman", serif`;
         const pages = [], labels = [];
         let canvas, ctx;
         function blank() {
