@@ -55,9 +55,9 @@
     ]);
     const THEMES = {
         'Parchment & Gold': { bg: 'FBF3DD', amh: '13345F', lat: '9A1B1B', accent: 'C49A2E', muted: '8A7A55' },
-        'Royal Indigo':     { bg: 'F3F1FB', amh: '2A2160', lat: 'A8246B', accent: '6D52C9', muted: '7C7596' },
+        'Royal Indigo':     { bg: 'F3F1FB', amh: '2A2160', lat: '8E1F5B', accent: '6D52C9', muted: '7C7596' },
         'Forest & Cream':   { bg: 'F1F5EA', amh: '1E4D3B', lat: '9A3B1B', accent: 'B98A2E', muted: '6E7B63' },
-        'Midnight (dark)':  { bg: '141C2E', amh: 'E8EEFB', lat: 'F4B79E', accent: 'D4AF37', muted: '93A0B8' }
+        'Midnight (dark)':  { bg: '141C2E', amh: 'FFFFFF', lat: 'FFC66B', accent: 'D4AF37', muted: 'A5B3CF' }
     };
     const DEFAULT_THEME = 'Parchment & Gold';
     function theme(key) { return THEMES[key] || THEMES[DEFAULT_THEME]; }
@@ -129,28 +129,15 @@
         return chunks;
     }
 
-    // Pack verses into pages/slides up to maxRows rows. Verses that fit stay
-    // whole; a verse larger than a slide is split across slides so NOTHING ever
-    // overflows. Always returns pages of <= maxRows rows.
+    // One verse per page/slide — verses are never mixed on a slide. A verse
+    // larger than maxRows rows is split across consecutive slides so nothing
+    // ever overflows.
     function packVersesIntoSlides(verses, maxRows) {
         const out = [];
-        let cur = [], n = 0;
-        const flush = () => { if (cur.length) { out.push(cur); cur = []; n = 0; } };
         for (const verse of verses) {
-            const vr = rowsOf(verse);
-            if (vr <= maxRows) {
-                if (n + vr > maxRows) flush();
-                cur.push(verse); n += vr;
-            } else {
-                flush();
-                const chunks = splitVerse(verse, maxRows);
-                chunks.forEach((c, idx) => {
-                    if (idx < chunks.length - 1) { out.push([c]); }
-                    else { cur = [c]; n = rowsOf(c); }
-                });
-            }
+            if (rowsOf(verse) <= maxRows) out.push([verse]);
+            else splitVerse(verse, maxRows).forEach(c => out.push([c]));
         }
-        flush();
         return out;
     }
 
@@ -170,6 +157,7 @@
         return base.replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-') || 'Mezmur';
     }
 
+    // 8 rows = up to 4 Amharic+Latin pairs; a typical whole verse fits one slide.
     const MAX_ROWS = 8;
 
     async function exportSongsPDF(songs, themeKey) {
@@ -185,7 +173,7 @@
         const pageW = doc.internal.pageSize.getWidth(), pageH = doc.internal.pageSize.getHeight();
         const scale = 4, cw = Math.round(pageW * scale), ch = Math.round(pageH * scale);
         const margin = 78, maxW = cw - margin * 2;
-        const amSize = 46, enSize = 36, amLH = 60, enLH = 50, intraGap = 4, pairGap = 20, verseGap = 44;
+        const amSize = 58, enSize = 46, amLH = 74, enLH = 60, intraGap = 6, pairGap = 26, verseGap = 52;
         const amFont = `bold ${amSize}px "Noto Sans Ethiopic", "Noto Serif", serif`;
         const enFont = `600 ${enSize}px Georgia, "Times New Roman", serif`;
         const pages = [], labels = [];
@@ -214,13 +202,13 @@
             ctx.lineWidth = 1.5; ctx.strokeRect(64, 64, cw - 128, ch - 128);
             ctx.fillStyle = accC; ctx.textBaseline = 'alphabetic'; ctx.font = '96px Georgia, serif';
             ctx.fillText('✝︎', cw / 2, 250);
-            ctx.textBaseline = 'top'; ctx.fillStyle = amhC; ctx.font = `bold 64px "Noto Sans Ethiopic", "Noto Serif", serif`;
+            ctx.textBaseline = 'top'; ctx.fillStyle = amhC; ctx.font = `bold 70px "Noto Sans Ethiopic", "Noto Serif", serif`;
             let ty = 300;
-            wrap(songTitle(song), `bold 64px "Noto Sans Ethiopic", "Noto Serif", serif`).forEach(l => { ctx.fillText(l, cw / 2, ty); ty += 78; });
+            wrap(songTitle(song), `bold 70px "Noto Sans Ethiopic", "Noto Serif", serif`).forEach(l => { ctx.fillText(l, cw / 2, ty); ty += 86; });
             ty += 6; ctx.strokeStyle = accC; ctx.lineWidth = 3;
             ctx.beginPath(); ctx.moveTo(cw / 2 - 170, ty); ctx.lineTo(cw / 2 + 170, ty); ctx.stroke(); ty += 26;
             const sub = songSubtitle(song);
-            if (sub) { ctx.fillStyle = latC; ctx.font = 'italic 34px Georgia, serif'; wrap(sub, 'italic 34px Georgia, serif').forEach(l => { ctx.fillText(l, cw / 2, ty); ty += 44; }); }
+            if (sub) { ctx.fillStyle = latC; ctx.font = 'italic 38px Georgia, serif'; wrap(sub, 'italic 38px Georgia, serif').forEach(l => { ctx.fillText(l, cw / 2, ty); ty += 48; }); }
             ctx.fillStyle = mutedC; ctx.textBaseline = 'alphabetic'; ctx.font = '22px Georgia, serif';
             ctx.fillText(song.year ? String(song.year) : '', cw / 2, ch - 96);
             const contentPages = packVersesIntoSlides(verses, MAX_ROWS);
@@ -240,6 +228,9 @@
                         } else { ctx.font = enFont; ctx.fillStyle = latC; for (const ln of wrap(it.latin, enFont)) { ctx.fillText(ln, cw / 2, y); y += enLH; } y += pairGap; }
                     }
                 });
+                ctx.fillStyle = mutedC; ctx.font = '22px Georgia, serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+                ctx.fillText(songTitle(song), 60, ch - 26);
+                ctx.textAlign = 'center'; ctx.textBaseline = 'top';
             });
         }
         pages.forEach((cnv, idx) => {
@@ -272,11 +263,13 @@
             ts.addShape(pres.ShapeType.line, { x: 3.6, y: 3.05, w: 2.8, h: 0, line: { color: T.accent, width: 1.75 } });
             const sub = songSubtitle(song);
             if (sub) ts.addText(sub, { x: 0.6, y: 3.2, w: 8.8, h: 0.7, fontSize: 22, italic: true, color: T.lat, align: 'center', valign: 'middle', fontFace: 'Georgia' });
+            ts.addText('መዝሙር ዘተዋህዶ · Mezmur Ze Tewahido', { x: 0.6, y: 4.72, w: 8.8, h: 0.4, fontSize: 12, color: T.muted, align: 'center', fontFace: 'Georgia' });
             const slides = packVersesIntoSlides(verses, MAX_ROWS);
             slides.forEach((sv, idx) => {
                 const slide = pres.addSlide();
                 slide.background = { fill: T.bg };
-                const SLIDE_H = 5.625, amSize = 24, enSize = 19, rowAm = 0.46, rowEn = 0.40, pairGap = 0.07, verseGap = 0.24;
+                slide.addShape(pres.ShapeType.line, { x: 4.4, y: 0.22, w: 1.2, h: 0, line: { color: T.accent, width: 1 } });
+                const SLIDE_H = 5.625, amSize = 30, enSize = 24, rowAm = 0.64, rowEn = 0.52, pairGap = 0.08, verseGap = 0.30;
                 const itemH = it => it.amharic ? (rowAm + rowEn + pairGap) : (rowEn + pairGap);
                 let blockH = 0; sv.forEach((verse, i) => { verse.forEach(it => { blockH += itemH(it); }); if (i < sv.length - 1) blockH += verseGap; }); blockH -= pairGap;
                 let y = Math.max(0.35, (SLIDE_H - blockH) / 2);
@@ -284,16 +277,17 @@
                     if (i > 0) { slide.addShape(pres.ShapeType.line, { x: 4.45, y: y + verseGap / 2, w: 1.1, h: 0, line: { color: T.accent, width: 1 } }); y += verseGap; }
                     verse.forEach(it => {
                         if (it.amharic) {
-                            slide.addText(it.amharic, { x: 0.5, y, w: 9, h: rowAm, fontSize: amSize, bold: true, color: T.amh, align: 'center', valign: 'middle', fontFace: 'Nyala' });
+                            slide.addText(it.amharic, { x: 0.4, y, w: 9.2, h: rowAm, fontSize: amSize, bold: true, color: T.amh, align: 'center', valign: 'middle', fontFace: 'Nyala', fit: 'shrink' });
                             y += rowAm;
-                            slide.addText(it.latin, { x: 0.5, y, w: 9, h: rowEn, fontSize: enSize, bold: true, color: T.lat, align: 'center', valign: 'middle', fontFace: 'Georgia' });
+                            slide.addText(it.latin, { x: 0.4, y, w: 9.2, h: rowEn, fontSize: enSize, bold: true, color: T.lat, align: 'center', valign: 'middle', fontFace: 'Georgia', fit: 'shrink' });
                             y += rowEn + pairGap;
                         } else {
-                            slide.addText(it.latin, { x: 0.5, y, w: 9, h: rowEn, fontSize: enSize, bold: true, color: T.lat, align: 'center', valign: 'middle', fontFace: 'Georgia' });
+                            slide.addText(it.latin, { x: 0.4, y, w: 9.2, h: rowEn, fontSize: enSize, bold: true, color: T.lat, align: 'center', valign: 'middle', fontFace: 'Georgia', fit: 'shrink' });
                             y += rowEn + pairGap;
                         }
                     });
                 });
+                slide.addText(songTitle(song), { x: 0.4, y: 5.28, w: 5.5, h: 0.3, fontSize: 10, color: T.muted, align: 'left', fontFace: 'Georgia' });
                 slide.addText(`${idx + 1} / ${slides.length}`, { x: 8.7, y: 5.28, w: 1.0, h: 0.3, fontSize: 10, color: T.muted, align: 'right', fontFace: 'Georgia' });
             });
         }
