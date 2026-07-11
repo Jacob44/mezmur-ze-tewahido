@@ -348,16 +348,11 @@ function addView(){
       <div id="aBatchBox"></div>
     </div>
     <div id="aPreviewBox"></div>
-    <div class="addout" id="aOutWrap" style="display:none">
-      <label>To add it to the site permanently for everyone: paste this record into songs.js before the closing <code>]</code>, or download the JSON.</label>
-      <textarea id="aOut" rows="10" readonly></textarea>
-      <div class="btn-row"><button class="btn" id="aCopy">Copy record</button><button class="btn" id="aJson">Download .json</button></div>
-    </div>
   </div>`;
 }
 function bindAdd(){
   const titleEl=document.getElementById('aTitle'), lyrEl=document.getElementById('aLyrics'), sel=document.getElementById('themeSel');
-  const box=document.getElementById('aPreviewBox'), outWrap=document.getElementById('aOutWrap'), out=document.getElementById('aOut');
+  const box=document.getElementById('aPreviewBox');
   function makeSong(){
     const am=(titleEl.value||'').trim(); const lyrics=lyrEl.value||'';
     const slug=(C.transliterateText(am).replace(/[^A-Za-z0-9]+/g,'-').replace(/^-+|-+$/g,'').toLowerCase())||('m'+Date.now());
@@ -369,19 +364,6 @@ function bindAdd(){
     let body='';
     verses.forEach(v=>{ body+='<div class="verse">'; v.forEach(it=>{ if(it.amharic){body+=`<div class="la" style="color:#${T.amh}">${esc(it.amharic)}</div>`;body+=`<div class="ll" style="color:#${T.lat}">${esc(it.latin)}</div>`;} else body+=`<div class="ll" style="color:#${T.lat}">${esc(it.latin)}</div>`; }); body+='</div>'; });
     box.innerHTML = verses.length ? `<div class="src" style="text-align:left">Preview · ${slides+1} slides (title + ${slides})</div><div class="lyrics" style="background:#${T.bg};border-color:#${T.accent}55">${body}</div>` : '<div class="empty">Paste some Amharic lyrics to preview.</div>';
-    const q=s=>JSON.stringify(s);
-    out.value='    {\n'+
-      '        id: '+q(song.id)+',\n'+
-      '        title: { am: '+q(song.title.am)+', latin: "" },\n'+
-      '        singer: { am: "", latin: "" },\n'+
-      '        album: { am: "", latin: "" },\n'+
-      '        year: null, track: null, language: "am",\n'+
-      '        media: { youtube: "" },\n'+
-      '        tags: ["Orthodox", "Tewahedo", "Amharic"],\n'+
-      '        source: { from: "", url: "", license: "" },\n'+
-      '        lyrics: '+q(song.lyrics)+'\n'+
-      '    },';
-    outWrap.style.display=(song.title.am||song.lyrics.trim())?'block':'none';
   }
   document.getElementById('aSave').addEventListener('click',()=>{
     const song=makeSong();
@@ -432,8 +414,6 @@ function bindAdd(){
   sel.addEventListener('change',()=>{ try{localStorage.setItem('mezmurTheme',sel.value);}catch(e){} preview(); });
   document.getElementById('aPdf').addEventListener('click',()=>C.exportSongPDF(makeSong(),sel.value));
   document.getElementById('aPpt').addEventListener('click',()=>C.exportSongPPT(makeSong(),sel.value));
-  document.getElementById('aCopy').addEventListener('click',()=>{ out.select(); if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(out.value).catch(()=>document.execCommand('copy')); else document.execCommand('copy'); });
-  document.getElementById('aJson').addEventListener('click',()=>{ const song=makeSong(); const b=new Blob([JSON.stringify(song,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=(song.id||'mezmur')+'.json'; a.click(); URL.revokeObjectURL(a.href); });
 }
 
 window.addEventListener('hashchange',()=>{ render(); window.scrollTo(0,0); });
