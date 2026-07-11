@@ -343,8 +343,9 @@ function addView(){
         <button class="btn" id="aPdf">PDF</button>
         <button class="btn" id="aPpt">PPT</button>
         <button class="btn" id="aAddBatch">+ ወደ ስብስብ · Add to batch</button>
+        <button class="btn" id="aSuggest">✉ ጠቁም · Suggest for the site</button>
       </div>
-      <div class="hint" style="margin-top:8px">Saving adds the mezmur to your library instantly (stored in this browser). “Add to batch” queues this mezmur so several can be downloaded together as one PDF/PPT.</div>
+      <div class="hint" style="margin-top:8px">Saving adds the mezmur to your library instantly (stored in this browser). “Add to batch” queues this mezmur so several can be downloaded together as one PDF/PPT. “Suggest” emails it to the site keeper so it can be added for everyone.</div>
       <div id="aBatchBox"></div>
     </div>
     <div id="aPreviewBox"></div>
@@ -396,6 +397,14 @@ function bindAdd(){
     titleEl.value=''; lyrEl.value=''; preview(); renderBatch(); titleEl.focus();
   });
   renderBatch();
+  document.getElementById('aSuggest').addEventListener('click',()=>{
+    const song=makeSong();
+    if(!song.title.am.trim()){ alert('Please add a title first — እባክዎ ርዕስ ያስገቡ።'); titleEl.focus(); return; }
+    if(!C.buildVersesFromText(song.lyrics).length){ alert('Please add the lyrics first — እባክዎ ግጥሙን ያስገቡ።'); lyrEl.focus(); return; }
+    const subject='መዝሙር ጥቆማ · Mezmur suggestion: '+song.title.am;
+    const body='ርዕስ · Title:\n'+song.title.am+'\n\nግጥም · Lyrics:\n'+song.lyrics+'\n\n— Mezmur Ze Tewahido';
+    location.href='mailto:yacobtsegaye1@gmail.com?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+  });
   document.getElementById('aFile').addEventListener('change',async e=>{
     const f=e.target.files&&e.target.files[0]; if(!f) return;
     const nameEl=document.getElementById('aFileName');
